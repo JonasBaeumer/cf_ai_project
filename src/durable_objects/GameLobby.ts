@@ -170,14 +170,6 @@ export class GameLobby extends DurableObject {
    * Handle WebSocket upgrade and connection
    */
   private handleWebSocketUpgrade(request: Request): Response {
-    // TODO: 
-    // 1. Create WebSocketPair
-    // 2. Accept the server-side WebSocket using this.ctx.acceptWebSocket()
-    // 3. Store playerId in WebSocket metadata
-    // 4. Return Response with client WebSocket
-    
-    // TASK 4: YOUR CODE HERE
-    // Hint: Check the Cloudflare cursor rules for WebSocket Hibernation API example
     
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
@@ -203,11 +195,13 @@ export class GameLobby extends DurableObject {
   private async addPlayer(playerId: string, playerName: string): Promise<void> {
     // TODO: 
     // 1. Create Player object
+    const player: Player = {id: playerId, name: playerName, connected: false, totalScore: 0}
     // 2. Add to this.players Map
+    this.players.set(playerId, player)
     // 3. Save state
+    await this.saveState();
     // 4. Broadcast to all players that someone joined
-    
-    // TASK 5: YOUR CODE HERE
+    this.broadcast({type: 'player_joined', data: {playerId, playerName}})
     
     console.log(`Player ${playerName} (${playerId}) joined`);
   }
@@ -260,6 +254,13 @@ export class GameLobby extends DurableObject {
     if (playerId) {
       // TODO: Mark player as disconnected and remove their WebSocket
       // TASK 6: YOUR CODE HERE
+      const player = this.players.get(playerId);
+      if (player) {
+        player.connected = false;
+      }
+      this.webSockets.delete(playerId);
+      await this.saveState();
+      this.broadcast({type: 'player_disconnected', data: {playerId}})
       
       console.log(`Player ${playerId} disconnected`);
     }
