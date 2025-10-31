@@ -193,7 +193,6 @@ export class GameLobby extends DurableObject {
    * Add a player to the lobby
    */
   private async addPlayer(playerId: string, playerName: string): Promise<void> {
-    // TODO: 
     // 1. Create Player object
     const player: Player = {id: playerId, name: playerName, connected: false, totalScore: 0}
     // 2. Add to this.players Map
@@ -282,7 +281,6 @@ export class GameLobby extends DurableObject {
       return;
     }
 
-    // TODO:
     // 1. Change status to 'countdown'
     this.gameState.status = 'countdown';
 
@@ -334,7 +332,6 @@ export class GameLobby extends DurableObject {
       return;
     }
 
-    // TODO:
     // 1. Check if player already answered
     if (this.gameState.currentRound.answers.has(playerId)) {
       console.log(`Player ${playerId} already answered`);
@@ -363,7 +360,6 @@ export class GameLobby extends DurableObject {
   private async endRound(): Promise<void> {
     if (!this.gameState.currentRound) return;
 
-    // TODO:
     if (this.gameState.status === "round_ended") {
       console.log("Round already ended");
       return;
@@ -411,12 +407,17 @@ export class GameLobby extends DurableObject {
    * End the game and show final results
    */
   private async endGame(): Promise<void> {
-    // TODO:
     // 1. Update status to 'finished'
+    this.gameState.status = 'finished'
     // 2. Calculate final leaderboard
+    const leaderboard = calculateLeaderboard(this.players);
     // 3. Broadcast winner and final standings
-    
-    // TASK 11: YOUR CODE HERE
+    this.broadcast({type: 'game_ended', 
+      data: {
+        winner: leaderboard[0],
+        leaderboard: leaderboard
+      }
+    })
     
     console.log("Game ended");
   }
@@ -428,8 +429,13 @@ export class GameLobby extends DurableObject {
     const payload = JSON.stringify(message);
     
     // TODO: Loop through this.webSockets and send to each
-    // TASK 12: YOUR CODE HERE
-    // Hint: ws.send(payload)
+    for (const [playerId, ws] of this.webSockets.entries()) {
+      try {
+        ws.send(payload);
+      } catch (error) {
+        console.error(`Error sending message to ${playerId}:`, error);
+      }
+    }
     
     console.log(`Broadcasting: ${message.type}`);
   }
