@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { CountryFlags } from "../lib/flags";
-import { getRandomCountry, isAnswerCorrect } from "../lib/flags";
-import { calculateLeaderboard, evaluateRound, type PlayerAnswer, type PlayerScore } from "../lib/game-logic";
+import { getRandomCountry } from "../lib/flags";
+import { calculateLeaderboard, evaluateRound, type PlayerAnswer } from "../lib/game-logic";
 
 // ============================================
 // TYPES & INTERFACES
@@ -137,14 +137,14 @@ export class GameLobby extends DurableObject {
 
     // POST /initialize - Set up a new lobby
     if (path === "/initialize" && request.method === "POST") {
-      const { hostId, hostName, invitationCode } = await request.json();
+      const { hostId, hostName, invitationCode } = await request.json() as { hostId: string, hostName: string, invitationCode: string };
       await this.initialize(hostId, hostName, invitationCode);
       return Response.json({ success: true });
     }
 
     // POST /join - Add a player to the lobby
     if (path === "/join" && request.method === "POST") {
-      const { playerId, playerName } = await request.json();
+      const { playerId, playerName } = await request.json() as { playerId: string, playerName: string };
       await this.addPlayer(playerId, playerName);
       return Response.json({ success: true, players: Array.from(this.players.values()) });
     }
