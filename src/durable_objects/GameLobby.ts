@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { CountryFlags } from "../lib/flags";
 import { getRandomCountry, isAnswerCorrect } from "../lib/flags";
-import { evaluateRound, type PlayerAnswer, type PlayerScore } from "../lib/game-logic";
+import { calculateLeaderboard, evaluateRound, type PlayerAnswer, type PlayerScore } from "../lib/game-logic";
 
 // ============================================
 // TYPES & INTERFACES
@@ -364,14 +364,45 @@ export class GameLobby extends DurableObject {
     if (!this.gameState.currentRound) return;
 
     // TODO:
+    if (this.gameState.status === "round_ended") {
+      console.log("Round already ended");
+      return;
+    }
+    this.gameState.status = 'round_ended';
     // 1. Collect all answers
+    const answers = Array.from(this.gameState.currentRound.answers.values());
     // 2. Use evaluateRound() from game-logic.ts to score them
+    const scores = evaluateRound(
+      answers, 
+      this.gameState.currentRound.country,
+      this.gameState.currentRound.startTime
+    );
     // 3. Update player totalScores
+    for (const score of scores) {
+      const player = this.players.get(score.playerId);
+      if (player) {
+        player.totalScore += score.roundScore;
+      }
+    }
+
+    await this.saveState();
     // 4. Broadcast results to all players
+    this.broadcast({type: 'round_result', 
+      data: {
+        correctAnswer: this.gameState.currentRound.country.name,
+        correctFlag: this.gameState.currentRound.country.emoji,
+        scores: scores,
+        leaderboard: calculateLeaderboard(this.players)
+      }
+    })
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
     // 5. If more rounds, start next round
-    // 6. If game over, call endGame()
-    
-    // TASK 10: YOUR CODE HERE
+    if (this.gameState.currentRound.number < this.gameState.totalRounds) {
+      await this.startRound(this.gameState.currentRound.number + 1);
+    } else {
+      await this.endGame();
+    }
     
     console.log("Round ended");
   }
