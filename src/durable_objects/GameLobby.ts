@@ -284,12 +284,13 @@ export class GameLobby extends DurableObject {
 
     // TODO:
     // 1. Change status to 'countdown'
-    // 2. Broadcast countdown to all players (3, 2, 1...)
-    // 3. Start first round
-    
-    // TASK 7: YOUR CODE HERE
-    // Hint: Use setTimeout or sleep to create countdown
-    // After countdown, call this.startRound(1)
+    this.gameState.status = 'countdown';
+
+    for (let i = 3; i > 0; i--) {
+      this.broadcast({type: 'countdown_started', data: {countdown: i}})
+      await new Promise(resolve => setTimeout(resolve, 1000))  
+    }
+    await this.startRound(1)
     
     console.log("Starting game...");
   }
@@ -298,14 +299,28 @@ export class GameLobby extends DurableObject {
    * Start a new round
    */
   private async startRound(roundNumber: number): Promise<void> {
-    // TODO:
     // 1. Get random country
+    const country = getRandomCountry();
     // 2. Create CurrentRound object
+    this.gameState.currentRound = {
+      number: roundNumber, 
+      country: country,
+      startTime: Date.now(),
+      answers: new Map(),
+    }
     // 3. Update gameState.status to 'playing'
+    this.gameState.status = 'playing';
     // 4. Broadcast flag to all players
-    // 5. Set timeout to end round after 10 seconds
-    
-    // TASK 8: YOUR CODE HERE
+    this.broadcast({type: 'flag', 
+      data: {
+        flagEmoji: country.emoji,
+        roundNumber: roundNumber, 
+        totalRounds: this.gameState.totalRounds,
+        startTime: this.gameState.currentRound.startTime
+      }
+    })
+    // 5. Set timeout to end round after 20 seconds
+    setTimeout(() => this.endRound(), 15000);
     
     console.log(`Starting round ${roundNumber}`);
   }
