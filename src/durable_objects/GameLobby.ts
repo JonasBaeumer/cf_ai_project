@@ -336,11 +336,23 @@ export class GameLobby extends DurableObject {
 
     // TODO:
     // 1. Check if player already answered
+    if (this.gameState.currentRound.answers.has(playerId)) {
+      console.log(`Player ${playerId} already answered`);
+      return;
+    } 
+    this.gameState.currentRound.answers.set(playerId, 
+      {
+        playerId: playerId, 
+        answer: answer,
+        timestamp: Date.now(),
+      })
+    await this.saveState();
+     
     // 2. Record answer with timestamp
-    // 3. Check if all players have answered
-    // 4. If yes, end round immediately
-    
-    // TASK 9: YOUR CODE HERE
+    // 3. Check if all players have answered, if yes end the round immediately
+    if (this.gameState.currentRound.answers.size === this.players.size) {
+      await this.endRound();
+    }
     
     console.log(`Player ${playerId} answered: ${answer}`);
   }
