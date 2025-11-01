@@ -90,6 +90,14 @@ export class GameLobby extends DurableObject {
   }
 
   /**
+   * Check if this lobby has been initialized
+   */
+  private async isInitialized(): Promise<boolean> {
+    const lobbyId = await this.ctx.storage.get(this.STORAGE_KEYS.LOBBY_ID);
+    return lobbyId !== undefined;
+  }
+
+  /**
    * Save state to persistent storage
    */
   private async saveState(): Promise<void> {
@@ -157,6 +165,11 @@ export class GameLobby extends DurableObject {
 
     // GET /status - Get current lobby status
     if (path === "/status" && request.method === "GET") {
+      // Check if lobby exists
+      if (!(await this.isInitialized())) {
+        return Response.json({ error: "Lobby not found" }, { status: 404 });
+      }
+      
       return Response.json({
         players: Array.from(this.players.values()),
         gameState: this.gameState,

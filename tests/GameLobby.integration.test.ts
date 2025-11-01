@@ -14,7 +14,8 @@ import { describe, it, expect, beforeEach, beforeAll } from "vitest";
  */
 
 // Get worker URL from environment or use localhost
-const WORKER_URL = process.env.WORKER_URL || "http://localhost:8787";
+// Note: When using Vite dev server, the default port is 5173 (not 8787)
+const WORKER_URL = process.env.WORKER_URL || "http://localhost:5173";
 
 // Helper to generate unique IDs
 const generateId = () => `test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;

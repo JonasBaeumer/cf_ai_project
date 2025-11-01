@@ -131,11 +131,21 @@ export default {
     // POST /api/lobby/create - Create a new lobby
     if (url.pathname === "/api/lobby/create" && request.method === "POST") {
       try {
-        const { hostId, hostName, invitationCode } = await request.json() as {
-          hostId: string;
-          hostName: string;
-          invitationCode: string;
+        const body = await request.json() as {
+          hostId?: string;
+          hostName?: string;
+          invitationCode?: string;
         };
+
+        // Validate required fields
+        if (!body.hostId || !body.hostName || !body.invitationCode) {
+          return Response.json({
+            success: false,
+            error: "Missing required fields: hostId, hostName, invitationCode"
+          }, { status: 400 });
+        }
+
+        const { hostId, hostName, invitationCode } = body;
 
         // Get or create DO instance using invitation code as name
         const lobby = getLobbyByCode(env, invitationCode);
@@ -164,10 +174,20 @@ export default {
     if (url.pathname.match(/^\/api\/lobby\/([^/]+)\/join$/) && request.method === "POST") {
       try {
         const code = url.pathname.split("/")[3];
-        const { playerId, playerName } = await request.json() as {
-          playerId: string;
-          playerName: string;
+        const body = await request.json() as {
+          playerId?: string;
+          playerName?: string;
         };
+
+        // Validate required fields
+        if (!body.playerId || !body.playerName) {
+          return Response.json({
+            success: false,
+            error: "Missing required fields: playerId, playerName"
+          }, { status: 400 });
+        }
+
+        const { playerId, playerName } = body;
 
         const lobby = getLobbyByCode(env, code);
 
