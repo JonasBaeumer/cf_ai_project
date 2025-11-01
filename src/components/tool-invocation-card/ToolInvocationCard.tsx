@@ -18,7 +18,13 @@ function renderGameToolResult(toolType: string, result: any) {
     case 'tool-joinGameLobby':
       return <LobbyCard data={result} />;
     case 'tool-startGame':
-      return <GameCard lobbyCode={result.invitationCode} />;
+      return (
+        <GameCard 
+          lobbyCode={result.invitationCode}
+          playerId={result.playerId || ''}
+          playerName={result.playerName || 'Player'}
+        />
+      );
     default:
       return null;
   }

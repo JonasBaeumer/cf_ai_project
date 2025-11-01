@@ -147,10 +147,12 @@ const joinGameLobby = tool({
 const startGame = tool({
   description: "Start the game in a 'Guess the Country' lobby.",
   inputSchema: z.object({
-    invitationCode: z.string().describe("The invitation code of the lobby to start the game")
+    invitationCode: z.string().describe("The invitation code of the lobby to start the game"),
+    playerName: z.string().describe("The name of the player starting the game")
   }),
-  execute: async({invitationCode}) => {
+  execute: async({invitationCode, playerName}) => {
     try {
+      const playerId = await getOrCreatePlayerId();
       // Get base URL from environment variable (set in .dev.vars for local development)
       const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
       
@@ -168,7 +170,9 @@ const startGame = tool({
       }
       return {
         success: true,
-        invitationCode: invitationCode
+        invitationCode: invitationCode,
+        playerId: playerId,
+        playerName: playerName
       };
     } catch (error) {
       console.error("Error starting game", error);
