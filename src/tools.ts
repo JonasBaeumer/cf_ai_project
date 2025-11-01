@@ -67,7 +67,11 @@ const createGameLobby = tool({
     try {
       const invitationCode = `GAME-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
       const playerId = await getOrCreatePlayerId();
-      const create_lobby_request = new Request(`/api/lobby/create`, {
+      
+      // Get base URL (works in both browser and worker context)
+      const baseURL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      
+      const response = await fetch(`${baseURL}/api/lobby/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -78,7 +82,6 @@ const createGameLobby = tool({
           invitationCode: invitationCode
         })
       });
-      const response = await fetch(create_lobby_request);
       if (!response.ok) {
         return {
           success: false,
@@ -112,7 +115,10 @@ const joinGameLobby = tool({
     try {
       const playerId = await getOrCreatePlayerId();
       
-      const response = await fetch(`/api/lobby/${invitationCode}/join`, {
+      // Get base URL (works in both browser and worker context)
+      const baseURL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      
+      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -155,7 +161,10 @@ const startGame = tool({
   }),
   execute: async({invitationCode}) => {
     try {
-      const response = await fetch(`/api/lobby/${invitationCode}/start`, {
+      // Get base URL (works in both browser and worker context)
+      const baseURL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      
+      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/start`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
