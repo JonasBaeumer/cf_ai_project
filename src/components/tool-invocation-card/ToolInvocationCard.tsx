@@ -9,6 +9,19 @@ interface ToolResultWithContent {
   content: Array<{ type: string; text: string }>;
 }
 
+function renderGameToolResult(toolType: string, result: any) {
+  switch (toolType) {
+    case 'tool-createGameLobby':
+      return <LobbyCard data={result} />;
+    case 'tool-joinGameLobby':
+      return <LobbyCard data={result} />;
+    case 'tool-startGame':
+      return <GameCard lobbyCode={result.invitationCode} />;
+    default:
+      return null;
+  }
+}
+
 function isToolResultWithContent(
   result: unknown
 ): result is ToolResultWithContent {
@@ -104,33 +117,47 @@ export function ToolInvocationCard({
 
           {!needsConfirmation && toolUIPart.state === "output-available" && (
             <div className="mt-3 border-t border-[#F48120]/10 pt-3">
-              <h5 className="text-xs font-medium mb-1 text-muted-foreground">
-                Result:
-              </h5>
-              <pre className="bg-background/80 p-2 rounded-md text-xs overflow-auto whitespace-pre-wrap break-words max-w-[450px]">
-                {(() => {
-                  const result = toolUIPart.output;
-                  if (isToolResultWithContent(result)) {
-                    return result.content
-                      .map((item: { type: string; text: string }) => {
-                        if (
-                          item.type === "text" &&
-                          item.text.startsWith("\n~ Page URL:")
-                        ) {
-                          const lines = item.text.split("\n").filter(Boolean);
-                          return lines
-                            .map(
-                              (line: string) => `- ${line.replace("\n~ ", "")}`
-                            )
+              {(() => {
+                const result = toolUIPart.output;
+                const gameUI = renderGameToolResult(toolUIPart.type, result);
+                
+                // If it's a game tool, render custom UI
+                if (gameUI) {
+                  return gameUI;
+                }
+                
+                // Otherwise, render JSON result as before
+                return (
+                  <>
+                    <h5 className="text-xs font-medium mb-1 text-muted-foreground">
+                      Result:
+                    </h5>
+                    <pre className="bg-background/80 p-2 rounded-md text-xs overflow-auto whitespace-pre-wrap break-words max-w-[450px]">
+                      {(() => {
+                        if (isToolResultWithContent(result)) {
+                          return result.content
+                            .map((item: { type: string; text: string }) => {
+                              if (
+                                item.type === "text" &&
+                                item.text.startsWith("\n~ Page URL:")
+                              ) {
+                                const lines = item.text.split("\n").filter(Boolean);
+                                return lines
+                                  .map(
+                                    (line: string) => `- ${line.replace("\n~ ", "")}`
+                                  )
+                                  .join("\n");
+                              }
+                              return item.text;
+                            })
                             .join("\n");
                         }
-                        return item.text;
-                      })
-                      .join("\n");
-                  }
-                  return JSON.stringify(result, null, 2);
-                })()}
-              </pre>
+                        return JSON.stringify(result, null, 2);
+                      })()}
+                    </pre>
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
