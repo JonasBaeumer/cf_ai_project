@@ -10,6 +10,31 @@ import { getCurrentAgent } from "agents";
 import { scheduleSchema } from "agents/schedule";
 
 /**
+ * Get or create a persistent player ID for the current user
+ * This ensures the same user always has the same playerId across tool calls
+ */
+async function getOrCreatePlayerId(): Promise<string> {
+  const { agent } = getCurrentAgent<Chat>();
+  
+  // Check if playerId already exists in agent state
+  let playerId = (agent?.state as any)?.playerId;
+  
+  if (!playerId) {
+    // Generate new playerId and store it in agent state
+    playerId = crypto.randomUUID();
+    await agent?.setState({ 
+      ...(agent.state || {}),
+      playerId: playerId 
+    });
+    console.log(`Generated new playerId: ${playerId}`);
+  } else {
+    console.log(`Using existing playerId: ${playerId}`);
+  }
+  
+  return playerId;
+}
+
+/**
  * Weather information tool that requires human confirmation
  * When invoked, this will present a confirmation dialog to the user
  */
@@ -33,44 +58,158 @@ const getLocalTime = tool({
   }
 });
 
-const playGuessTheCountry = tool({
-  description: "the user can play a game with the assistant and other players to guess the country of a given flag",
-  inputSchema: z.object({ lobbyName: z.string()}),
-  execute: async ({ lobbyName }) => {
-    console.log(`Playing guess the country in lobby ${lobbyName}`);
-    return "Game started";
+const createGameLobby = tool({
+  description: "Create a new game lobby for 'Guess the Country'. Returns an invitation code that other players can use to join.",
+  inputSchema: z.object({
+    playerName: z.string().describe("The name is the player creating the lobby")
+  }),
+  execute: async ({playerName}) => {
+    try {
+      const invitationCode = `GAME-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
+      const playerId = await getOrCreatePlayerId();
+      const create_lobby_request = new Request(`/api/lobby/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          hostId: playerId,
+          hostName: playerName,
+          invitationCode: invitationCode
+        })
+      });
+      const response = await fetch(create_lobby_request);
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Failed to create lobby: ${response.statusText}`
+        };
+      }
+      const data = await response.json() as { invitationCode: string };
+      return {
+        success: true, 
+        invitationCode: data.invitationCode,
+        playerId: playerId,
+        playerName: playerName
+      };
+    } catch (error) {
+      console.error("Error creating lobby", error);
+      return {
+        success: false,
+        error: `Failed to create lobby: ${error}`
+      };
+    }
+  }
+});
+
+const joinGameLobby = tool({
+  description: "Join an existing 'Guess the Country' game lobby using an invitation code.",
+  inputSchema: z.object({
+    playerName: z.string().describe("The name of the player joining the lobby"),
+    invitationCode: z.string().describe("The invitation code of the lobby to join")
+  }),
+  execute: async ({playerName, invitationCode}) => {
+    try {
+      const playerId = await getOrCreatePlayerId();
+      
+      const response = await fetch(`/api/lobby/${invitationCode}/join`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          playerId,
+          playerName
+        })
+      });
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Failed to join lobby: ${response.statusText}`
+        };
+      }
+      
+      const data = await response.json() as { success: boolean, players: Array<{id: string, name: string}> };
+      return {
+        success: true,
+        invitationCode: invitationCode,
+        playerId: playerId,
+        playerName: playerName,
+        players: data.players
+      };
+    } catch (error) {
+      console.error("Error joining lobby", error);
+      return {
+        success: false,
+        error: `Failed to join lobby: ${error}`
+      };
+    }
+  }
+});
+
+const startGame = tool({
+  description: "Start the game in a 'Guess the Country' lobby.",
+  inputSchema: z.object({
+    invitationCode: z.string().describe("The invitation code of the lobby to start the game")
+  }),
+  execute: async({invitationCode}) => {
+    try {
+      const response = await fetch(`/api/lobby/${invitationCode}/start`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Failed to start game: ${response.statusText}`
+        };
+      }
+      return {
+        success: true,
+        invitationCode: invitationCode
+      };
+    } catch (error) {
+      console.error("Error starting game", error);
+      return {
+        success: false,
+        error: `Failed to start game: ${error}`
+      };
+    }
   }
 });
 
 const scheduleTask = tool({
-  description: "A tool to schedule a task to be executed at a later time",
-  inputSchema: scheduleSchema,
-  execute: async ({ when, description }) => {
-    // we can now read the agent context from the ALS store
-    const { agent } = getCurrentAgent<Chat>();
+    description: "A tool to schedule a task to be executed at a later time",
+    inputSchema: scheduleSchema,
+    execute: async ({ when, description }) => {
+      // we can now read the agent context from the ALS store
+      const { agent } = getCurrentAgent<Chat>();
 
-    function throwError(msg: string): string {
-      throw new Error(msg);
+      function throwError(msg: string): string {
+        throw new Error(msg);
+      }
+      if (when.type === "no-schedule") {
+        return "Not a valid schedule input";
+      }
+      const input =
+        when.type === "scheduled"
+          ? when.date // scheduled
+          : when.type === "delayed"
+            ? when.delayInSeconds // delayed
+            : when.type === "cron"
+              ? when.cron // cron
+              : throwError("not a valid schedule input");
+      try {
+        agent!.schedule(input!, "executeTask", description);
+      } catch (error) {
+        console.error("error scheduling task", error);
+        return `Error scheduling task: ${error}`;
+      }
+      return `Task scheduled for type "${when.type}" : ${input}`;
     }
-    if (when.type === "no-schedule") {
-      return "Not a valid schedule input";
-    }
-    const input =
-      when.type === "scheduled"
-        ? when.date // scheduled
-        : when.type === "delayed"
-          ? when.delayInSeconds // delayed
-          : when.type === "cron"
-            ? when.cron // cron
-            : throwError("not a valid schedule input");
-    try {
-      agent!.schedule(input!, "executeTask", description);
-    } catch (error) {
-      console.error("error scheduling task", error);
-      return `Error scheduling task: ${error}`;
-    }
-    return `Task scheduled for type "${when.type}" : ${input}`;
-  }
 });
 
 /**
@@ -124,7 +263,9 @@ const cancelScheduledTask = tool({
 export const tools = {
   getWeatherInformation,
   getLocalTime,
-  playGuessTheCountry,
+  createGameLobby,
+  joinGameLobby,
+  startGame, 
   scheduleTask,
   getScheduledTasks,
   cancelScheduledTask
