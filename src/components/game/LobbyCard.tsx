@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/button/Button";
 import { useGameLobby } from "@/hooks/useGameLobby";
 import { Copy, Users } from "@phosphor-icons/react";
+import { GameCard } from "./GameCard";
 
 interface LobbyCardProps {
   data: {
@@ -37,6 +38,17 @@ export function LobbyCard({ data }: LobbyCardProps) {
     console.log("Start game clicked");
     startGame();
   };
+
+  // If game has started, show GameCard instead
+  if (gameState.status !== 'waiting') {
+    return (
+      <GameCard 
+        lobbyCode={data.invitationCode}
+        playerId={data.playerId}
+        playerName={data.playerName}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
