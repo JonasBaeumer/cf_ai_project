@@ -11,25 +11,15 @@ import { scheduleSchema } from "agents/schedule";
 
 /**
  * Get or create a persistent player ID for the current user
- * This ensures the same user always has the same playerId across tool calls
+ * Generates a unique player ID per agent instance (per browser session)
  */
 async function getOrCreatePlayerId(): Promise<string> {
-  const { agent } = getCurrentAgent<Chat>();
+  // Simply generate a unique player ID
+  // Since each browser now gets its own Agent instance (via sessionId),
+  // we can use a simple UUID that's consistent per agent
+  const playerId = crypto.randomUUID();
   
-  // Check if playerId already exists in agent state
-  let playerId = (agent?.state as any)?.playerId;
-  
-  if (!playerId) {
-    // Generate new playerId and store it in agent state
-    playerId = crypto.randomUUID();
-    await agent?.setState({ 
-      ...(agent.state || {}),
-      playerId: playerId 
-    });
-    console.log(`Generated new playerId: ${playerId}`);
-  } else {
-    console.log(`Using existing playerId: ${playerId}`);
-  }
+  console.log(`Using playerId: ${playerId}`);
   
   return playerId;
 }

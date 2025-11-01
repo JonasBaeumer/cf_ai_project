@@ -70,8 +70,21 @@ export default function Chat() {
     setTheme(newTheme);
   };
 
+  // Generate or retrieve a unique session ID for this browser
+  const [sessionId] = useState(() => {
+    // Check if we have a session ID in sessionStorage
+    let id = sessionStorage.getItem('agentSessionId');
+    if (!id) {
+      // Generate a new unique ID for this browser session
+      id = crypto.randomUUID();
+      sessionStorage.setItem('agentSessionId', id);
+    }
+    return id;
+  });
+
   const agent = useAgent({
-    agent: "chat"
+    agent: "chat",
+    name: sessionId  // Each browser gets its own agent instance
   });
 
   const [agentInput, setAgentInput] = useState("");
