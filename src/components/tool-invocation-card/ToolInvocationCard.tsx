@@ -4,6 +4,8 @@ import { Robot, CaretDown } from "@phosphor-icons/react";
 import { Button } from "@/components/button/Button";
 import { Card } from "@/components/card/Card";
 import { APPROVAL } from "@/shared";
+import { LobbyCard } from "@/components/game/LobbyCard";
+import { GameCard } from "@/components/game/GameCard";
 
 interface ToolResultWithContent {
   content: Array<{ type: string; text: string }>;
