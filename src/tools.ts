@@ -68,8 +68,8 @@ const createGameLobby = tool({
       const invitationCode = `GAME-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
       const playerId = await getOrCreatePlayerId();
       
-      // Get base URL (works in both browser and worker context)
-      const baseURL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      // Get base URL from environment variable (set in .dev.vars for local development)
+      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
       
       const response = await fetch(`${baseURL}/api/lobby/create`, {
         method: "POST",
@@ -115,8 +115,8 @@ const joinGameLobby = tool({
     try {
       const playerId = await getOrCreatePlayerId();
       
-      // Get base URL (works in both browser and worker context)
-      const baseURL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      // Get base URL from environment variable (set in .dev.vars for local development)
+      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
       
       const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/join`, {
         method: "POST",
@@ -161,8 +161,8 @@ const startGame = tool({
   }),
   execute: async({invitationCode}) => {
     try {
-      // Get base URL (works in both browser and worker context)
-      const baseURL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      // Get base URL from environment variable (set in .dev.vars for local development)
+      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
       
       const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/start`, {
         method: "POST",

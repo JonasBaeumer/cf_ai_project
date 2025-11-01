@@ -5,6 +5,7 @@ declare namespace Cloudflare {
 		Chat: DurableObjectNamespace<import("./src/server").Chat>;
 		GameLobby: DurableObjectNamespace<import("./src/durable_objects/GameLobby").GameLobby>;
 		AI: Ai;
+		API_BASE_URL?: string;
 	}
 }
 interface Env extends Cloudflare.Env {}
