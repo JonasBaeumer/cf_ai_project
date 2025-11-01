@@ -182,7 +182,7 @@ export class GameLobby extends DurableObject {
   /**
    * Handle WebSocket upgrade and connection
    */
-  private handleWebSocketUpgrade(request: Request): Response {
+  private async handleWebSocketUpgrade(request: Request): Promise<Response> {
     
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
@@ -197,6 +197,14 @@ export class GameLobby extends DurableObject {
     
     this.ctx.acceptWebSocket(server, [playerId]);
     this.webSockets.set(playerId, server);
+    
+    // Mark player as connected
+    const player = this.players.get(playerId);
+    if (player) {
+      player.connected = true;
+    }
+    await this.saveState();
+    
     this.broadcast({ type: 'player_connected', data: { playerId } });
 
     return new Response(null, { status: 101, webSocket: client });

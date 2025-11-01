@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/button/Button";
+import { useGameLobby } from "@/hooks/useGameLobby";
 import { Copy, Users } from "@phosphor-icons/react";
 
 interface LobbyCardProps {
@@ -14,6 +15,13 @@ interface LobbyCardProps {
 
 export function LobbyCard({ data }: LobbyCardProps) {
   const [copied, setCopied] = useState(false);
+  const { players, gameState, connected, startGame } = useGameLobby(
+    data.invitationCode,
+    data.playerId
+  );
+
+  // Debug: log players whenever it changes
+  console.log('LobbyCard received players:', players, 'length:', players?.length);
 
   const handleCopyCode = async () => {
     try {
@@ -26,8 +34,8 @@ export function LobbyCard({ data }: LobbyCardProps) {
   };
 
   const handleStartGame = async () => {
-    // TODO: We'll implement this later with the WebSocket hook
     console.log("Start game clicked");
+    startGame();
   };
 
   return (
@@ -36,6 +44,12 @@ export function LobbyCard({ data }: LobbyCardProps) {
       <div className="flex items-center gap-2">
         <Users size={20} className="text-[#F48120]" />
         <h3 className="font-semibold text-lg">Game Lobby</h3>
+        {connected && (
+            <span className="text-xs text-green-500">● Connected</span>
+        )}
+        {!connected && (
+            <span className="text-xs text-gray-400">○ Connecting...</span>
+        )}
       </div>
 
       {/* Invitation Code */}
@@ -59,11 +73,11 @@ export function LobbyCard({ data }: LobbyCardProps) {
       {/* Players List */}
       <div>
         <p className="text-sm font-medium mb-2">
-          Players ({data.players?.length || 1}):
+          Players ({players?.length || 0}):
         </p>
         <div className="space-y-2">
-          {data.players && data.players.length > 0 ? (
-            data.players.map((player, index) => (
+          {players && players.length > 0 ? (
+            players.map((player, index) => (
               <div key={player.id} className="flex items-center gap-2">
                 {/* Connection status dot */}
                 <div className={`w-2 h-2 rounded-full ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`} />
@@ -92,7 +106,7 @@ export function LobbyCard({ data }: LobbyCardProps) {
       {/* Actions */}
       <div className="flex gap-2">
         {/* Start Game button - only show for host (first player) */}
-        {data.players && data.players.length > 0 && data.players[0].id === data.playerId && (
+        {players && players.length > 0 && players[0].id === data.playerId && (
           <Button
             variant="primary"
             size="sm"
@@ -104,7 +118,7 @@ export function LobbyCard({ data }: LobbyCardProps) {
         )}
         
         {/* If no players array yet, show for the creator */}
-        {(!data.players || data.players.length === 0) && (
+        {(!players || players.length === 0) && (
           <Button
             variant="primary"
             size="sm"
