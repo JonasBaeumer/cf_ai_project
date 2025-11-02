@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useAgentContext } from '@/contexts/AgentContext';
 
 /**
  * Player in the lobby
@@ -80,6 +81,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Get agent context to send notifications
+  const { sendMessage } = useAgentContext();
 
   /**
    * Send answer to the server
@@ -196,6 +200,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 },
                 roundResult: null,
               }));
+              
+              // Notify agent about new round
+              sendMessage(`🎮 Round ${message.data.roundNumber} started! Show me the flag for invitation code ${invitationCode}`);
               break;
 
             case 'round_result':
@@ -205,6 +212,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 status: 'round_ended',
                 roundResult: message.data,
               }));
+              
+              // Notify agent about round result
+              sendMessage(`⏱️ Round ended! Show me the results for invitation code ${invitationCode}`);
               break;
 
             case 'game_ended':
@@ -214,6 +224,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 status: 'finished',
                 finalLeaderboard: message.data.leaderboard,
               }));
+              
+              // Notify agent about game end
+              sendMessage(`🏆 Game finished! Show me the final results for invitation code ${invitationCode}`);
               break;
           }
         } catch (err) {
@@ -241,7 +254,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       console.error('Error creating WebSocket:', err);
         setError('Failed to connect');
     }
-  }, [invitationCode, playerId, fetchPlayers]);
+  }, [invitationCode, playerId, fetchPlayers, sendMessage]);
 
   /**
    * Connect on mount and cleanup on unmount
