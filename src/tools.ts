@@ -11,17 +11,32 @@ import { scheduleSchema } from "agents/schedule";
 
 /**
  * Get or create a persistent player ID for the current user
- * Generates a unique player ID per agent instance (per browser session)
+ * Stores the ID in the agent's state so it persists across tool calls
  */
 async function getOrCreatePlayerId(): Promise<string> {
-  // Simply generate a unique player ID
-  // Since each browser now gets its own Agent instance (via sessionId),
-  // we can use a simple UUID that's consistent per agent
-  const playerId = crypto.randomUUID();
+  const { agent } = getCurrentAgent<Chat>();
   
-  console.log(`Using playerId: ${playerId}`);
+  // Try to get existing playerId from agent state
+  const existingState = agent?.state as { playerId?: string } | undefined;
   
-  return playerId;
+  if (existingState?.playerId) {
+    console.log(`Using existing playerId: ${existingState.playerId}`);
+    return existingState.playerId;
+  }
+  
+  // Generate new playerId if none exists
+  const newPlayerId = crypto.randomUUID();
+  
+  // Store it in agent state for future calls
+  if (agent) {
+    await agent.setState({
+      ...existingState,
+      playerId: newPlayerId
+    });
+  }
+  
+  console.log(`Created new playerId: ${newPlayerId}`);
+  return newPlayerId;
 }
 
 /**
@@ -185,7 +200,7 @@ const startGame = tool({
 });
 
 const getGameStatus = tool({
-  description: "Get the current status of a game lobby, including current round, flag, and game state. Use this to check what's happening in the game and display the current flag to players.",
+  description: "Get the current status of a game lobby, including current round, flag, and game state. Use this when you receive notifications about rounds starting or ending, or when the user asks about game status. Display the flag emoji to players when a new round starts.",
   inputSchema: z.object({
     invitationCode: z.string().describe("The invitation code of the game lobby")
   }),

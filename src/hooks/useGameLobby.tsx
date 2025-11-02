@@ -202,7 +202,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               }));
               
               // Notify agent about new round
-              sendMessage(`🎮 Round ${message.data.roundNumber} started! Show me the flag for invitation code ${invitationCode}`);
+              console.log(`🎮 Sending round notification for ${invitationCode}`);
+              sendMessage(`🎮 Round ${message.data.roundNumber} started! Show me the flag for invitation code ${invitationCode}`)
+                .catch(err => console.error('Failed to notify agent about round start:', err));
               break;
 
             case 'round_result':
@@ -214,7 +216,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               }));
               
               // Notify agent about round result
-              sendMessage(`⏱️ Round ended! Show me the results for invitation code ${invitationCode}`);
+              console.log(`⏱️ Sending round result notification for ${invitationCode}`);
+              sendMessage(`⏱️ Round ended! Show me the results for invitation code ${invitationCode}`)
+                .catch(err => console.error('Failed to notify agent about round result:', err));
               break;
 
             case 'game_ended':
@@ -226,7 +230,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               }));
               
               // Notify agent about game end
-              sendMessage(`🏆 Game finished! Show me the final results for invitation code ${invitationCode}`);
+              console.log(`🏆 Sending game end notification for ${invitationCode}`);
+              sendMessage(`🏆 Game finished! Show me the final results for invitation code ${invitationCode}`)
+                .catch(err => console.error('Failed to notify agent about game end:', err));
               break;
           }
         } catch (err) {
