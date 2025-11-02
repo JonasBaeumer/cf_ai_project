@@ -184,6 +184,86 @@ const startGame = tool({
   }
 });
 
+const getGameStatus = tool({
+  description: "Get the current status of a game lobby, including current round, flag, and game state. Use this to check what's happening in the game and display the current flag to players.",
+  inputSchema: z.object({
+    invitationCode: z.string().describe("The invitation code of the game lobby")
+  }),
+  execute: async({invitationCode}) => {
+    try {
+      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
+      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/status`);
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Failed to get game status: ${response.statusText}`
+        };
+      }
+      
+      const data = await response.json() as {
+        players: Array<{id: string, name: string, connected: boolean, totalScore: number}>,
+        gameState: any
+      };
+      
+      return {
+        success: true,
+        players: data.players,
+        gameState: data.gameState
+      };
+    } catch (error) {
+      console.error("Error getting game status", error);
+      return {
+        success: false,
+        error: `Failed to get game status: ${error}`
+      };
+    }
+  }
+});
+
+const submitAnswer = tool({
+  description: "Submit a player's answer for the current round in a Guess the Country game.",
+  inputSchema: z.object({
+    invitationCode: z.string().describe("The invitation code of the game lobby"),
+    answer: z.string().describe("The player's answer (country name)")
+  }),
+  execute: async({invitationCode, answer}) => {
+    try {
+      const playerId = await getOrCreatePlayerId();
+      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
+      
+      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/answer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          playerId,
+          answer
+        })
+      });
+      
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Failed to submit answer: ${response.statusText}`
+        };
+      }
+      
+      return {
+        success: true,
+        message: "Answer submitted! Waiting for other players..."
+      };
+    } catch (error) {
+      console.error("Error submitting answer", error);
+      return {
+        success: false,
+        error: `Failed to submit answer: ${error}`
+      };
+    }
+  }
+});
+
 const scheduleTask = tool({
     description: "A tool to schedule a task to be executed at a later time",
     inputSchema: scheduleSchema,
@@ -268,7 +348,9 @@ export const tools = {
   getLocalTime,
   createGameLobby,
   joinGameLobby,
-  startGame, 
+  startGame,
+  getGameStatus,
+  submitAnswer,
   scheduleTask,
   getScheduledTasks,
   cancelScheduledTask

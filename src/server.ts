@@ -226,6 +226,41 @@ export default {
       }
     }
 
+    // POST /api/lobby/:code/answer - Submit an answer
+    if (url.pathname.match(/^\/api\/lobby\/([^/]+)\/answer$/) && request.method === "POST") {
+      try {
+        const code = url.pathname.split("/")[3];
+        const body = await request.json() as {
+          playerId?: string;
+          answer?: string;
+        };
+
+        // Validate required fields
+        if (!body.playerId || !body.answer) {
+          return Response.json({
+            success: false,
+            error: "Missing required fields: playerId, answer"
+          }, { status: 400 });
+        }
+
+        const lobby = getLobbyByCode(env, code);
+        
+        // Forward to Durable Object - send answer via WebSocket message
+        const response = await lobby.fetch(new Request(`${url.origin}/answer`, {
+          method: "POST",
+          body: JSON.stringify(body)
+        }));
+
+        return response;
+      } catch (error) {
+        console.error("Error submitting answer:", error);
+        return Response.json({
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error"
+        }, { status: 500 });
+      }
+    }
+
     // GET /api/lobby/:code/status - Get lobby status
     if (url.pathname.match(/^\/api\/lobby\/([^/]+)\/status$/) && request.method === "GET") {
       try {

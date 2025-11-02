@@ -163,6 +163,13 @@ export class GameLobby extends DurableObject {
       return Response.json({ success: true });
     }
 
+    // POST /answer - Submit an answer
+    if (path === "/answer" && request.method === "POST") {
+      const { playerId, answer } = await request.json() as { playerId: string, answer: string };
+      await this.handlePlayerAnswer(playerId, answer);
+      return Response.json({ success: true });
+    }
+
     // GET /status - Get current lobby status
     if (path === "/status" && request.method === "GET") {
       // Check if lobby exists

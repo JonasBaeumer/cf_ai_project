@@ -39,17 +39,8 @@ export function LobbyCard({ data }: LobbyCardProps) {
     startGame();
   };
 
-  // If game has started, show GameCard instead
-  if (gameState.status !== 'waiting') {
-    return (
-      <GameCard 
-        lobbyCode={data.invitationCode}
-        playerId={data.playerId}
-        playerName={data.playerName}
-      />
-    );
-  }
-
+  // Keep showing lobby card - don't switch to GameCard
+  // The agent will display flags and handle answers in chat
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -90,16 +81,25 @@ export function LobbyCard({ data }: LobbyCardProps) {
         <div className="space-y-2">
           {players && players.length > 0 ? (
             players.map((player, index) => (
-              <div key={player.id} className="flex items-center gap-2">
-                {/* Connection status dot */}
-                <div className={`w-2 h-2 rounded-full ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`} />
+              <div key={player.id} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {/* Connection status dot */}
+                  <div className={`w-2 h-2 rounded-full ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  
+                  {/* Player name */}
+                  <span className="text-sm">
+                    {player.name}
+                    {player.id === data.playerId && <span className="text-[#F48120] ml-1">(You)</span>}
+                    {index === 0 && <span className="text-muted-foreground ml-1">(Host)</span>}
+                  </span>
+                </div>
                 
-                {/* Player name */}
-                <span className="text-sm">
-                  {player.name}
-                  {player.id === data.playerId && <span className="text-[#F48120] ml-1">(You)</span>}
-                  {index === 0 && <span className="text-muted-foreground ml-1">(Host)</span>}
-                </span>
+                {/* Score - show if game is in progress */}
+                {gameState.status !== 'waiting' && (
+                  <span className="text-sm font-semibold text-[#F48120]">
+                    {player.totalScore || 0} pts
+                  </span>
+                )}
               </div>
             ))
           ) : (
