@@ -145,7 +145,7 @@ const joinGameLobby = tool({
 });
 
 const startGame = tool({
-  description: "Start the game in a 'Guess the Country' lobby.",
+  description: "Start the game in a 'Guess the Country' lobby. Before calling this tool, send countdown messages like '🎮 Starting in 3...', '2...', '1...', 'Let's play!' to build excitement. Then call this tool to begin the game.",
   inputSchema: z.object({
     invitationCode: z.string().describe("The invitation code of the lobby to start the game"),
     playerName: z.string().describe("The name of the player starting the game")

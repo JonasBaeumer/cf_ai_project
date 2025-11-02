@@ -1,4 +1,4 @@
-interface CountryFlags {
+export interface CountryFlags {
     name: string; 
     emoji: string;
     alternate_names?: string[];

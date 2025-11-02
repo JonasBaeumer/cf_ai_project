@@ -175,6 +175,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               fetchPlayers();
               break;
 
+            case 'game_starting':
             case 'countdown_started':
               setGameState(prev => ({
                 ...prev,

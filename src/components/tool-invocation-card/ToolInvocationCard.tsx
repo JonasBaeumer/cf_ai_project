@@ -18,12 +18,12 @@ function renderGameToolResult(toolType: string, result: any) {
     case 'tool-joinGameLobby':
       return <LobbyCard data={result} />;
     case 'tool-startGame':
+      // Don't render GameCard here - the existing LobbyCard will switch to GameCard automatically
+      // Just show a simple success message
       return (
-        <GameCard 
-          lobbyCode={result.invitationCode}
-          playerId={result.playerId || ''}
-          playerName={result.playerName || 'Player'}
-        />
+        <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded">
+          ✓ Game started! Check the lobby above for the game screen.
+        </div>
       );
     default:
       return null;

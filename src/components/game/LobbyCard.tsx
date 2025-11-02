@@ -116,35 +116,26 @@ export function LobbyCard({ data }: LobbyCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        {/* Start Game button - only show for host (first player) */}
+      <div className="flex flex-col gap-2">
+        {/* Info message for host */}
         {players && players.length > 0 && players[0].id === data.playerId && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleStartGame}
-            className="flex-1"
-          >
-            Start Game
-          </Button>
+          <div className="text-sm text-muted-foreground text-center py-2 px-3 bg-[#F48120]/5 rounded">
+            Ready to play? Tell me "Start the game" to begin! 🎮
+          </div>
         )}
         
         {/* If no players array yet, show for the creator */}
         {(!players || players.length === 0) && (
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleStartGame}
-            className="flex-1"
-          >
-            Start Game
-          </Button>
+          <div className="text-sm text-muted-foreground text-center py-2 px-3 bg-[#F48120]/5 rounded">
+            Ready to play? Tell me "Start the game" to begin! 🎮
+          </div>
         )}
         
         <Button
           variant="secondary"
           size="sm"
           onClick={() => console.log("Leave lobby")}
+          className="w-full"
         >
           Leave
         </Button>
