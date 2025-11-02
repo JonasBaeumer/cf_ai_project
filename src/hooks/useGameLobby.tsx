@@ -105,6 +105,28 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   }, []);
 
   /**
+   * Fetch current player list from API
+   */
+  const fetchPlayers = useCallback(async () => {
+    try {
+      const baseURL = window.location.origin;
+      console.log(`Fetching players from: ${baseURL}/api/lobby/${invitationCode}/status`);
+      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/status`);
+      if (response.ok) {
+        const data = await response.json() as { players: LobbyPlayer[], gameState: any };
+        console.log('Fetched players:', data.players);
+        console.log('Setting players state with length:', data.players.length);
+        setPlayers(data.players);
+        // Could also update gameState here if needed
+      } else {
+        console.error('Failed to fetch players:', response.status, response.statusText);
+      }
+    } catch (err) {
+      console.error('Error fetching players:', err);
+    }
+  }, [invitationCode]);
+
+  /**
    * Connect to the lobby WebSocket
    */
   const connect = useCallback(() => {
@@ -216,31 +238,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       };
     } catch (err) {
       console.error('Error creating WebSocket:', err);
-      setError('Failed to connect');
+        setError('Failed to connect');
     }
-  }, [invitationCode, playerId]);
-
-  /**
-   * Fetch current player list from API
-   */
-  const fetchPlayers = useCallback(async () => {
-    try {
-      const baseURL = window.location.origin;
-      console.log(`Fetching players from: ${baseURL}/api/lobby/${invitationCode}/status`);
-      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/status`);
-      if (response.ok) {
-        const data = await response.json() as { players: LobbyPlayer[], gameState: any };
-        console.log('Fetched players:', data.players);
-        console.log('Setting players state with length:', data.players.length);
-        setPlayers(data.players);
-        // Could also update gameState here if needed
-      } else {
-        console.error('Failed to fetch players:', response.status, response.statusText);
-      }
-    } catch (err) {
-      console.error('Error fetching players:', err);
-    }
-  }, [invitationCode]);
+  }, [invitationCode, playerId, fetchPlayers]);
 
   /**
    * Connect on mount and cleanup on unmount
