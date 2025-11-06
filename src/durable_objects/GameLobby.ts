@@ -309,12 +309,22 @@ export class GameLobby extends DurableObject {
       return;
     }
 
-    // Change status and start first round immediately
-    // The agent will handle countdown messages in the chat
+    // Change status to countdown
     this.gameState.status = 'countdown';
     
-    // Broadcast that game is starting
-    this.broadcast({type: 'game_starting', data: {}});
+    // Broadcast countdown messages to ALL players
+    for (let i = 3; i > 0; i--) {
+      this.broadcast({
+        type: 'countdown', 
+        data: { count: i, message: `🎮 Starting in ${i}...` }
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    this.broadcast({
+      type: 'countdown', 
+      data: { count: 0, message: "Let's play! 🎯" }
+    });
     
     // Start the first round
     await this.startRound(1);

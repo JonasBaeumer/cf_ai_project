@@ -186,6 +186,13 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 status: 'countdown',
               }));
               break;
+            
+            case 'countdown':
+              // Server broadcasting countdown - send message WITH the text
+              console.log(`⏱️ Countdown: ${message.data.message}`);
+              sendMessage(message.data.message)
+                .catch(err => console.error('Failed to send countdown:', err));
+              break;
 
             case 'flag':
               // New round started
@@ -201,10 +208,13 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: null,
               }));
               
-              // Notify agent about new round
-              console.log(`🎮 Sending round notification for ${invitationCode}`);
-              sendMessage(`🎮 Round ${message.data.roundNumber} started! Show me the flag for invitation code ${invitationCode}`)
-                .catch(err => console.error('Failed to notify agent about round start:', err));
+              // Send flag directly to agent with all data
+              console.log(`🎮 Sending flag for round ${message.data.roundNumber}`);
+              sendMessage(
+                `🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\n` +
+                `${message.data.flagEmoji}\n\n` +
+                `Which country is this? You have 15 seconds! ⏱️`
+              ).catch(err => console.error('Failed to send flag:', err));
               break;
 
             case 'round_result':
@@ -215,10 +225,17 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: message.data,
               }));
               
-              // Notify agent about round result
-              console.log(`⏱️ Sending round result notification for ${invitationCode}`);
-              sendMessage(`⏱️ Round ended! Show me the results for invitation code ${invitationCode}`)
-                .catch(err => console.error('Failed to notify agent about round result:', err));
+              // Send results directly with all data
+              console.log(`⏱️ Sending round results`);
+              const leaderboard = message.data.leaderboard
+                .map((p: any, i: number) => `${i + 1}. ${p.playerName}: ${p.totalScore} pts`)
+                .join('\n');
+              
+              sendMessage(
+                `⏱️ **Round Over!**\n\n` +
+                `The correct answer was: **${message.data.correctAnswer}** ${message.data.correctFlag}\n\n` +
+                `**Leaderboard:**\n${leaderboard}`
+              ).catch(err => console.error('Failed to send results:', err));
               break;
 
             case 'game_ended':
@@ -229,10 +246,18 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 finalLeaderboard: message.data.leaderboard,
               }));
               
-              // Notify agent about game end
-              console.log(`🏆 Sending game end notification for ${invitationCode}`);
-              sendMessage(`🏆 Game finished! Show me the final results for invitation code ${invitationCode}`)
-                .catch(err => console.error('Failed to notify agent about game end:', err));
+              // Send final results with winner
+              console.log(`🏆 Sending game end results`);
+              const winner = message.data.winner;
+              const finalBoard = message.data.leaderboard
+                .map((p: any, i: number) => `${i + 1}. ${p.playerName}: ${p.totalScore} pts`)
+                .join('\n');
+              
+              sendMessage(
+                `🏆 **Game Over!**\n\n` +
+                `🎉 **${winner.playerName}** wins with ${winner.totalScore} points!\n\n` +
+                `**Final Standings:**\n${finalBoard}`
+              ).catch(err => console.error('Failed to send game end:', err));
               break;
           }
         } catch (err) {

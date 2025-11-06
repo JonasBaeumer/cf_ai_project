@@ -156,10 +156,8 @@ export default function Chat() {
         {
           role: "user",
           parts: [{ type: "text", text }]
-        },
-        {
-          body: extraData
         }
+        // Don't pass extraData - not available in this scope
       );
     }
   };
