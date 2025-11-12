@@ -69,6 +69,8 @@ export class Chat extends AIChatAgent<Env> {
 ${getSchedulePrompt({ date: new Date() })}
 
 If the user asks to schedule a task, use the schedule tool to schedule the task.
+
+IMPORTANT: Only call ONE tool per user message. Do not chain multiple tool calls together. After calling a tool, wait for the user's next message before taking any additional action.
 `,
 
           messages: convertToModelMessages(processedMessages),
@@ -79,7 +81,9 @@ If the user asks to schedule a task, use the schedule tool to schedule the task.
           onFinish: onFinish as unknown as StreamTextOnFinishCallback<
             typeof allTools
           >,
-          stopWhen: stepCountIs(10)
+          // Limit to 2 steps max to prevent agent from chaining too many tool calls
+          // Step 1: Call the tool, Step 2: Respond to user
+          stopWhen: stepCountIs(2)
         });
 
         writer.merge(result.toUIMessageStream());
