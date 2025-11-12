@@ -57,6 +57,7 @@ export class GameLobby extends DurableObject {
     currentRound: null,
     totalRounds: 3,
   };
+  private roundTimeoutId: ReturnType<typeof setTimeout> | null = null; // Track round timer
 
   /**
    * Constructor - called when DO is created or woken up
@@ -356,8 +357,8 @@ export class GameLobby extends DurableObject {
         startTime: this.gameState.currentRound.startTime
       }
     })
-    // 5. Set timeout to end round after 20 seconds
-    setTimeout(() => this.endRound(), 15000);
+    // 5. Set timeout to end round after 15 seconds - store ID so we can cancel it
+    this.roundTimeoutId = setTimeout(() => this.endRound(), 15000);
     
     console.log(`Starting round ${roundNumber}`);
   }
@@ -399,10 +400,18 @@ export class GameLobby extends DurableObject {
   private async endRound(): Promise<void> {
     if (!this.gameState.currentRound) return;
 
-    if (this.gameState.status === "round_ended") {
-      console.log("Round already ended");
+    // Guard: prevent multiple calls to endRound
+    if (this.gameState.status === "round_ended" || this.gameState.status === "finished") {
+      console.log("Round already ended or game finished");
       return;
     }
+    
+    // Clear the round timeout to prevent it from firing again
+    if (this.roundTimeoutId) {
+      clearTimeout(this.roundTimeoutId);
+      this.roundTimeoutId = null;
+    }
+    
     this.gameState.status = 'round_ended';
     // 1. Collect all answers
     const answers = Array.from(this.gameState.currentRound.answers.values());
@@ -446,6 +455,12 @@ export class GameLobby extends DurableObject {
    * End the game and show final results
    */
   private async endGame(): Promise<void> {
+    // Guard: prevent multiple calls to endGame
+    if (this.gameState.status === 'finished') {
+      console.log("Game already ended");
+      return;
+    }
+    
     // 1. Update status to 'finished'
     this.gameState.status = 'finished'
     // 2. Calculate final leaderboard

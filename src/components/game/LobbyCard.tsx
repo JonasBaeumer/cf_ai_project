@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Button } from "@/components/button/Button";
 import { useGameLobby } from "@/hooks/useGameLobby";
 import { Copy, Users } from "@phosphor-icons/react";
@@ -14,15 +14,12 @@ interface LobbyCardProps {
   };
 }
 
-export function LobbyCard({ data }: LobbyCardProps) {
+function LobbyCardComponent({ data }: LobbyCardProps) {
   const [copied, setCopied] = useState(false);
   const { players, gameState, connected, startGame } = useGameLobby(
     data.invitationCode,
     data.playerId
   );
-
-  // Debug: log players whenever it changes
-  console.log('LobbyCard received players:', players, 'length:', players?.length);
 
   const handleCopyCode = async () => {
     try {
@@ -35,7 +32,6 @@ export function LobbyCard({ data }: LobbyCardProps) {
   };
 
   const handleStartGame = async () => {
-    console.log("Start game clicked");
     startGame();
   };
 
@@ -143,3 +139,6 @@ export function LobbyCard({ data }: LobbyCardProps) {
     </div>
   );
 }
+
+// Memoize to prevent re-renders when parent (chat) updates
+export const LobbyCard = memo(LobbyCardComponent);

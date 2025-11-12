@@ -81,6 +81,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasConnectedRef = useRef<boolean>(false); // Track if we've already initiated connection
   
   // Get agent context to display system messages
   const { addSystemMessage } = useAgentContext();
@@ -114,19 +115,13 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   const fetchPlayers = useCallback(async () => {
     try {
       const baseURL = window.location.origin;
-      console.log(`Fetching players from: ${baseURL}/api/lobby/${invitationCode}/status`);
       const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/status`);
       if (response.ok) {
         const data = await response.json() as { players: LobbyPlayer[], gameState: any };
-        console.log('Fetched players:', data.players);
-        console.log('Setting players state with length:', data.players.length);
         setPlayers(data.players);
-        // Could also update gameState here if needed
-      } else {
-        console.error('Failed to fetch players:', response.status, response.statusText);
       }
     } catch (err) {
-      console.error('Error fetching players:', err);
+      console.error('[useGameLobby] Error fetching players:', err);
     }
   }, [invitationCode]);
 
@@ -134,26 +129,31 @@ export function useGameLobby(invitationCode: string, playerId: string) {
    * Connect to the lobby WebSocket
    */
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return; // Already connected
+    // Prevent multiple simultaneous connections
+    if (wsRef.current?.readyState === WebSocket.OPEN || 
+        wsRef.current?.readyState === WebSocket.CONNECTING) {
+      console.log('[useGameLobby] Already connected/connecting, skipping');
+      return;
+    }
+
+    // Clear any pending reconnection attempts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
     }
 
     try {
-      // Determine WebSocket URL based on environment
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      
-      // Get the lobby's WebSocket URL
-      // Pattern: ws://localhost:5173/api/lobby/GAME-XXX/ws?playerId=xxx
       const wsUrl = `${protocol}//${host}/api/lobby/${invitationCode}/ws?playerId=${playerId}`;
       
-      console.log(`Connecting to lobby WebSocket: ${wsUrl}`);
+      console.log(`[useGameLobby] Connecting to ${invitationCode}...`);
       
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Connected to lobby');
+        console.log(`[useGameLobby] ✓ Connected to ${invitationCode}`);
         setConnected(true);
         setError(null);
         // Fetch initial player list when connection opens
@@ -163,19 +163,12 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       ws.onmessage = (event) => {
         try {
           const message: WSMessage = JSON.parse(event.data);
-          console.log('Received message:', message);
 
           switch (message.type) {
             case 'player_joined':
-              // Fetch updated player list
-              fetchPlayers();
-              break;
-
             case 'player_connected':
-              fetchPlayers();
-              break;
-
             case 'player_disconnected':
+              // Only fetch players on actual player changes
               fetchPlayers();
               break;
 
@@ -189,12 +182,10 @@ export function useGameLobby(invitationCode: string, playerId: string) {
             
             case 'countdown':
               // Server broadcasting countdown - display as system message
-              console.log(`⏱️ Countdown: ${message.data.message}`);
               addSystemMessage(message.data.message);
               break;
 
             case 'flag':
-              // New round started
               setGameState(prev => ({
                 ...prev,
                 status: 'playing',
@@ -207,8 +198,6 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: null,
               }));
               
-              // Display flag as system message
-              console.log(`🎮 Displaying flag for round ${message.data.roundNumber}`);
               addSystemMessage(
                 `🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\n` +
                 `${message.data.flagEmoji}\n\n` +
@@ -217,15 +206,12 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               break;
 
             case 'round_result':
-              // Round ended, show results
               setGameState(prev => ({
                 ...prev,
                 status: 'round_ended',
                 roundResult: message.data,
               }));
               
-              // Display results as system message
-              console.log(`⏱️ Displaying round results`);
               const leaderboard = message.data.leaderboard
                 .map((p: any, i: number) => `${i + 1}. ${p.playerName}: ${p.totalScore} pts`)
                 .join('\n');
@@ -238,15 +224,12 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               break;
 
             case 'game_ended':
-              // Game finished
               setGameState(prev => ({
                 ...prev,
                 status: 'finished',
                 finalLeaderboard: message.data.leaderboard,
               }));
               
-              // Display final results as system message
-              console.log(`🏆 Displaying game end results`);
               const winner = message.data.winner;
               const finalBoard = message.data.leaderboard
                 .map((p: any, i: number) => `${i + 1}. ${p.playerName}: ${p.totalScore} pts`)
@@ -265,20 +248,22 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       };
 
       ws.onerror = (event) => {
-        console.error('WebSocket error:', event);
+        console.error('[useGameLobby] WebSocket error:', event);
         setError('Connection error');
       };
 
-      ws.onclose = () => {
-        console.log('Disconnected from lobby');
+      ws.onclose = (event) => {
+        console.log(`[useGameLobby] Disconnected (code: ${event.code})`);
         setConnected(false);
         wsRef.current = null;
 
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect...');
-          connect();
-        }, 3000);
+        // Only attempt to reconnect for abnormal closures
+        if (event.code !== 1000 && event.code !== 1001) {
+          console.log('[useGameLobby] Reconnecting in 3 seconds...');
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect();
+          }, 3000);
+        }
       };
     } catch (err) {
       console.error('Error creating WebSocket:', err);
@@ -288,22 +273,35 @@ export function useGameLobby(invitationCode: string, playerId: string) {
 
   /**
    * Connect on mount and cleanup on unmount
+   * Only runs ONCE to prevent reconnection storms
    */
   useEffect(() => {
+    // Prevent multiple connection attempts from React strict mode or re-renders
+    if (hasConnectedRef.current) {
+      console.log('[useGameLobby] Already initiated connection, skipping useEffect');
+      return;
+    }
+    
+    hasConnectedRef.current = true;
+    console.log('[useGameLobby] Initial connection setup');
     connect();
     fetchPlayers(); // Initial fetch
 
     return () => {
       // Cleanup: close WebSocket and cancel reconnect attempts
+      console.log('[useGameLobby] Cleaning up connection');
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
       if (wsRef.current) {
-        wsRef.current.close();
+        wsRef.current.close(1000, 'Component unmounting');
         wsRef.current = null;
       }
+      hasConnectedRef.current = false;
     };
-  }, [connect, fetchPlayers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invitationCode, playerId]); // Only reconnect if lobby or player changes
 
   return {
     players,

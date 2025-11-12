@@ -14,7 +14,7 @@ import { Toggle } from "@/components/toggle/Toggle";
 import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
-import { SystemMessage } from "@/components/system-message/SystemMessage";
+import { GameEventsSidebar } from "@/components/game-events/GameEventsSidebar";
 import { AgentContext } from "@/contexts/AgentContext";
 
 // Icon imports
@@ -141,11 +141,6 @@ export default function Chat() {
     agentMessages.length > 0 && scrollToBottom();
   }, [agentMessages, scrollToBottom]);
 
-  // Also scroll when system messages arrive
-  useEffect(() => {
-    systemMessages.length > 0 && scrollToBottom();
-  }, [systemMessages, scrollToBottom]);
-
   const pendingToolCallConfirmation = agentMessages.some((m: UIMessage) =>
     m.parts?.some(
       (part) =>
@@ -161,17 +156,6 @@ export default function Chat() {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
-
-  // Merge system messages and agent messages in chronological order
-  const allMessages = [...systemMessages.map(msg => ({
-    type: 'system' as const,
-    ...msg,
-    createdAt: new Date(msg.timestamp),
-  })), ...agentMessages.map(msg => ({
-    type: 'agent' as const,
-    ...msg,
-    createdAt: msg.metadata?.createdAt ? new Date(msg.metadata.createdAt) : new Date(),
-  }))].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   // Provide sendMessage and addSystemMessage to all child components via context
   const agentContextValue = {
@@ -200,7 +184,9 @@ export default function Chat() {
     <AgentContext.Provider value={agentContextValue}>
       <div className="h-[100vh] w-full p-4 flex justify-center items-center bg-fixed overflow-hidden">
         <HasOpenAIKey />
-      <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-lg flex flex-col shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
+      <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-7xl flex shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
+        {/* Main Chat Column */}
+        <div className="flex-1 flex flex-col min-w-0">
         <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
           <div className="flex items-center justify-center h-8 w-8">
             <svg
@@ -248,7 +234,10 @@ export default function Chat() {
             size="md"
             shape="square"
             className="rounded-full h-9 w-9"
-            onClick={clearHistory}
+            onClick={() => {
+              clearHistory(); // Clear AI chat messages
+              setSystemMessages([]); // Clear game events
+            }}
           >
             <Trash size={20} />
           </Button>
@@ -283,26 +272,10 @@ export default function Chat() {
             </div>
           )}
 
-          {/* Render all messages in chronological order */}
-          {allMessages.map((message, index) => {
-            // System message
-            if (message.type === 'system') {
-              return (
-                <SystemMessage
-                  key={message.id}
-                  content={message.content}
-                  timestamp={message.timestamp}
-                />
-              );
-            }
-
-            // Agent message
-            const m = message as typeof message & { role: string; parts?: any[] };
+          {agentMessages.map((m, index) => {
             const isUser = m.role === "user";
             const showAvatar =
-              index === 0 || 
-              (allMessages[index - 1]?.type === 'agent' && 
-               (allMessages[index - 1] as any).role !== m.role);
+              index === 0 || agentMessages[index - 1]?.role !== m.role;
 
             return (
               <div key={m.id}>
@@ -389,8 +362,8 @@ export default function Chat() {
 
                             return (
                               <ToolInvocationCard
-                                // biome-ignore lint/suspicious/noArrayIndexKey: using index is safe here as the array is static
-                                key={`${toolCallId}-${i}`}
+                                // Unique key: messageId + toolCallId + index
+                                key={`${m.id}-${toolCallId}-${i}`}
                                 toolUIPart={part}
                                 toolCallId={toolCallId}
                                 needsConfirmation={needsConfirmation}
@@ -492,6 +465,16 @@ export default function Chat() {
             </div>
           </div>
         </form>
+        </div>
+        {/* End Main Chat Column */}
+
+        {/* Game Events Sidebar */}
+        <div className="w-80 hidden md:block">
+          <GameEventsSidebar 
+            events={systemMessages} 
+            isVisible={true}
+          />
+        </div>
       </div>
     </div>
     </AgentContext.Provider>
