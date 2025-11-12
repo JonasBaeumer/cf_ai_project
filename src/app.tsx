@@ -141,6 +141,11 @@ export default function Chat() {
     agentMessages.length > 0 && scrollToBottom();
   }, [agentMessages, scrollToBottom]);
 
+  // Also scroll when system messages arrive
+  useEffect(() => {
+    systemMessages.length > 0 && scrollToBottom();
+  }, [systemMessages, scrollToBottom]);
+
   const pendingToolCallConfirmation = agentMessages.some((m: UIMessage) =>
     m.parts?.some(
       (part) =>
@@ -156,6 +161,17 @@ export default function Chat() {
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  // Merge system messages and agent messages in chronological order
+  const allMessages = [...systemMessages.map(msg => ({
+    type: 'system' as const,
+    ...msg,
+    createdAt: new Date(msg.timestamp),
+  })), ...agentMessages.map(msg => ({
+    type: 'agent' as const,
+    ...msg,
+    createdAt: msg.metadata?.createdAt ? new Date(msg.metadata.createdAt) : new Date(),
+  }))].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   // Provide sendMessage and addSystemMessage to all child components via context
   const agentContextValue = {
@@ -267,19 +283,26 @@ export default function Chat() {
             </div>
           )}
 
-          {/* Render system messages */}
-          {systemMessages.map((sysMsg) => (
-            <SystemMessage
-              key={sysMsg.id}
-              content={sysMsg.content}
-              timestamp={sysMsg.timestamp}
-            />
-          ))}
+          {/* Render all messages in chronological order */}
+          {allMessages.map((message, index) => {
+            // System message
+            if (message.type === 'system') {
+              return (
+                <SystemMessage
+                  key={message.id}
+                  content={message.content}
+                  timestamp={message.timestamp}
+                />
+              );
+            }
 
-          {agentMessages.map((m, index) => {
+            // Agent message
+            const m = message as typeof message & { role: string; parts?: any[] };
             const isUser = m.role === "user";
             const showAvatar =
-              index === 0 || agentMessages[index - 1]?.role !== m.role;
+              index === 0 || 
+              (allMessages[index - 1]?.type === 'agent' && 
+               (allMessages[index - 1] as any).role !== m.role);
 
             return (
               <div key={m.id}>
