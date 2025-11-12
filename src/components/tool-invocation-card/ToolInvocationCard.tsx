@@ -14,12 +14,12 @@ interface ToolResultWithContent {
 function renderGameToolResult(toolType: string, result: any) {
   switch (toolType) {
     case 'tool-createGameLobby':
-      return <LobbyCard data={result} />;
     case 'tool-joinGameLobby':
-      return <LobbyCard data={result} />;
+      if (result && result.success) {
+        return <LobbyCard data={result} />;
+      }
+      return null;
     case 'tool-startGame':
-      // Don't render GameCard here - the existing LobbyCard will switch to GameCard automatically
-      // Just show a simple success message
       return (
         <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded">
           ✓ Game started! Check the lobby above for the game screen.

@@ -140,5 +140,12 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
   );
 }
 
-// Memoize to prevent re-renders when parent (chat) updates
-export const LobbyCard = memo(LobbyCardComponent);
+// Memoize with deep comparison of data prop
+export const LobbyCard = memo(LobbyCardComponent, (prevProps, nextProps) => {
+  // Only re-render if critical data changes
+  return (
+    prevProps.data.invitationCode === nextProps.data.invitationCode &&
+    prevProps.data.playerId === nextProps.data.playerId &&
+    prevProps.data.playerName === nextProps.data.playerName
+  );
+});

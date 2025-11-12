@@ -118,6 +118,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/status`);
       if (response.ok) {
         const data = await response.json() as { players: LobbyPlayer[], gameState: any };
+        console.log(`[useGameLobby ${invitationCode.slice(-4)}] fetchPlayers: got ${data.players.length} players`);
         setPlayers(data.players);
       }
     } catch (err) {
@@ -153,7 +154,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log(`[useGameLobby] ✓ Connected to ${invitationCode}`);
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[useGameLobby] ✓ Connected to ${invitationCode} at ${timestamp}`);
+        console.log(`[useGameLobby] WebSocket readyState:`, ws.readyState, '(1 = OPEN)');
         setConnected(true);
         setError(null);
         // Fetch initial player list when connection opens
@@ -163,6 +166,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       ws.onmessage = (event) => {
         try {
           const message: WSMessage = JSON.parse(event.data);
+          console.log(`[useGameLobby ${invitationCode.slice(-4)}] WS message:`, message.type);
 
           switch (message.type) {
             case 'player_joined':
@@ -182,6 +186,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
             
             case 'countdown':
               // Server broadcasting countdown - display as system message
+              console.log(`[useGameLobby ${invitationCode.slice(-4)}] → addSystemMessage (countdown):`, message.data.message);
               addSystemMessage(message.data.message);
               break;
 
@@ -278,18 +283,18 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   useEffect(() => {
     // Prevent multiple connection attempts from React strict mode or re-renders
     if (hasConnectedRef.current) {
-      console.log('[useGameLobby] Already initiated connection, skipping useEffect');
+      console.log(`[useGameLobby ${invitationCode.slice(-4)}] Already initiated connection, skipping useEffect`);
       return;
     }
     
     hasConnectedRef.current = true;
-    console.log('[useGameLobby] Initial connection setup');
+    console.log(`[useGameLobby ${invitationCode.slice(-4)}] Initial connection setup for player ${playerId.slice(0, 8)}`);
     connect();
     fetchPlayers(); // Initial fetch
 
     return () => {
       // Cleanup: close WebSocket and cancel reconnect attempts
-      console.log('[useGameLobby] Cleaning up connection');
+      console.log(`[useGameLobby ${invitationCode.slice(-4)}] Cleaning up connection`);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;

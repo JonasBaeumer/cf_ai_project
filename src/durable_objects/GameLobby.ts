@@ -51,7 +51,7 @@ export class GameLobby extends DurableObject {
 
   // In-memory state (not persisted)
   private players: Map<string, Player> = new Map();
-  private webSockets: Map<string, WebSocket> = new Map(); // playerId -> WebSocket
+  // Note: WebSockets are managed by the Hibernation API via this.ctx.getWebSockets()
   private gameState: GameState = {
     status: 'waiting',
     currentRound: null,
@@ -203,8 +203,9 @@ export class GameLobby extends DurableObject {
       return new Response("Missing playerId", { status: 400 });
     }
     
+    // Accept the WebSocket with the Hibernation API
+    // Tag it with playerId so we can identify it later
     this.ctx.acceptWebSocket(server, [playerId]);
-    this.webSockets.set(playerId, server);
     
     // Mark player as connected
     const player = this.players.get(playerId);
@@ -280,13 +281,11 @@ export class GameLobby extends DurableObject {
     const playerId = tags[0];
 
     if (playerId) {
-      // TODO: Mark player as disconnected and remove their WebSocket
-      // TASK 6: YOUR CODE HERE
+      // Mark player as disconnected
       const player = this.players.get(playerId);
       if (player) {
         player.connected = false;
       }
-      this.webSockets.delete(playerId);
       await this.saveState();
       this.broadcast({type: 'player_disconnected', data: {playerId}})
       
@@ -482,25 +481,31 @@ export class GameLobby extends DurableObject {
   private broadcast(message: WSMessage): void {
     const payload = JSON.stringify(message);
     
-    // TODO: Loop through this.webSockets and send to each
-    for (const [playerId, ws] of this.webSockets.entries()) {
+    // Use Hibernation API to get all connected WebSockets
+    const sockets = this.ctx.getWebSockets();
+    console.log(`Broadcasting ${message.type} to ${sockets.length} connected sockets`);
+    
+    for (const ws of sockets) {
       try {
         ws.send(payload);
       } catch (error) {
-        console.error(`Error sending message to ${playerId}:`, error);
+        console.error(`Error broadcasting ${message.type}:`, error);
       }
     }
-    
-    console.log(`Broadcasting: ${message.type}`);
   }
 
   /**
    * Send a message to a specific player
    */
   private sendToPlayer(playerId: string, message: WSMessage): void {
-    const ws = this.webSockets.get(playerId);
-    if (ws) {
-      ws.send(JSON.stringify(message));
+    // Get WebSocket for specific player using tags
+    const sockets = this.ctx.getWebSockets();
+    for (const ws of sockets) {
+      const tags = this.ctx.getTags(ws);
+      if (tags[0] === playerId) {
+        ws.send(JSON.stringify(message));
+        return;
+      }
     }
   }
 }

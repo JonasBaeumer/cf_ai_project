@@ -169,14 +169,19 @@ export default function Chat() {
       );
     },
     addSystemMessage: (content: string) => {
-      setSystemMessages(prev => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          content,
-          timestamp: Date.now()
-        }
-      ]);
+      console.log('[app.tsx] addSystemMessage called:', content.substring(0, 50));
+      setSystemMessages(prev => {
+        const newMessages = [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            content,
+            timestamp: Date.now()
+          }
+        ];
+        console.log('[app.tsx] systemMessages count:', newMessages.length);
+        return newMessages;
+      });
     }
   };
 
