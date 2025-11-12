@@ -160,7 +160,7 @@ const joinGameLobby = tool({
 });
 
 const startGame = tool({
-  description: "Start the game in a 'Guess the Country' lobby. Before calling this tool, send a message like 'Let's play!' to build excitement. Then call this tool to begin the game.",
+  description: "Start the game in a 'Guess the Country' lobby. The server will handle the countdown and send flags automatically to all players. After calling this, the game begins immediately.",
   inputSchema: z.object({
     invitationCode: z.string().describe("The invitation code of the lobby to start the game"),
     playerName: z.string().describe("The name of the player starting the game")
@@ -200,7 +200,7 @@ const startGame = tool({
 });
 
 const getGameStatus = tool({
-  description: "Get the current status of a game lobby, including current round, flag, and game state. Use this when you receive notifications about rounds starting or ending, or when the user asks about game status. Display the flag emoji to players when a new round starts.",
+  description: "Get the current status of a game lobby, including players, scores, and current round information. Only use this when the user explicitly asks for the game status or leaderboard. Do NOT call this automatically after starting a game - the server sends updates via the sidebar.",
   inputSchema: z.object({
     invitationCode: z.string().describe("The invitation code of the game lobby")
   }),
@@ -237,7 +237,7 @@ const getGameStatus = tool({
 });
 
 const submitAnswer = tool({
-  description: "Submit a player's answer for the current round in a Guess the Country game.",
+  description: "Submit a player's answer for the current round in a Guess the Country game. Call this ONLY when the user provides their answer. The round results will automatically appear in the sidebar when all players answer or the timer expires.",
   inputSchema: z.object({
     invitationCode: z.string().describe("The invitation code of the game lobby"),
     answer: z.string().describe("The player's answer (country name)")
@@ -280,34 +280,34 @@ const submitAnswer = tool({
 });
 
 const scheduleTask = tool({
-    description: "A tool to schedule a task to be executed at a later time",
-    inputSchema: scheduleSchema,
-    execute: async ({ when, description }) => {
-      // we can now read the agent context from the ALS store
-      const { agent } = getCurrentAgent<Chat>();
+  description: "A tool to schedule a task to be executed at a later time",
+  inputSchema: scheduleSchema,
+  execute: async ({ when, description }) => {
+    // we can now read the agent context from the ALS store
+    const { agent } = getCurrentAgent<Chat>();
 
-      function throwError(msg: string): string {
-        throw new Error(msg);
-      }
-      if (when.type === "no-schedule") {
-        return "Not a valid schedule input";
-      }
-      const input =
-        when.type === "scheduled"
-          ? when.date // scheduled
-          : when.type === "delayed"
-            ? when.delayInSeconds // delayed
-            : when.type === "cron"
-              ? when.cron // cron
-              : throwError("not a valid schedule input");
-      try {
-        agent!.schedule(input!, "executeTask", description);
-      } catch (error) {
-        console.error("error scheduling task", error);
-        return `Error scheduling task: ${error}`;
-      }
-      return `Task scheduled for type "${when.type}" : ${input}`;
+    function throwError(msg: string): string {
+      throw new Error(msg);
     }
+    if (when.type === "no-schedule") {
+      return "Not a valid schedule input";
+    }
+    const input =
+      when.type === "scheduled"
+        ? when.date // scheduled
+        : when.type === "delayed"
+          ? when.delayInSeconds // delayed
+          : when.type === "cron"
+            ? when.cron // cron
+            : throwError("not a valid schedule input");
+    try {
+      agent!.schedule(input!, "executeTask", description);
+    } catch (error) {
+      console.error("error scheduling task", error);
+      return `Error scheduling task: ${error}`;
+    }
+    return `Task scheduled for type "${when.type}" : ${input}`;
+  }
 });
 
 /**
