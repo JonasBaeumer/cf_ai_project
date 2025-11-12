@@ -5,7 +5,7 @@ import { createContext, useContext } from 'react';
  */
 interface AgentContextType {
   sendMessage: (text: string) => Promise<void>;
-  addSystemMessage: (content: string) => void;
+  addSystemMessage: (content: string, options?: { showInChat?: boolean }) => void;
 }
 
 export const AgentContext = createContext<AgentContextType | null>(null);

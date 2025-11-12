@@ -187,7 +187,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
             case 'countdown':
               // Server broadcasting countdown - display as system message
               console.log(`[useGameLobby ${invitationCode.slice(-4)}] → addSystemMessage (countdown):`, message.data.message);
-              addSystemMessage(message.data.message);
+              addSystemMessage(message.data.message, { showInChat: true });
               break;
 
             case 'flag':
@@ -206,7 +206,8 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               addSystemMessage(
                 `🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\n` +
                 `${message.data.flagEmoji}\n\n` +
-                `Which country is this? You have 15 seconds! ⏱️`
+                `Which country is this? You have 15 seconds! ⏱️`,
+                { showInChat: true } // Show flag in chat!
               );
               break;
 
@@ -224,7 +225,8 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               addSystemMessage(
                 `⏱️ **Round Over!**\n\n` +
                 `The correct answer was: **${message.data.correctAnswer}** ${message.data.correctFlag}\n\n` +
-                `**Leaderboard:**\n${leaderboard}`
+                `**Leaderboard:**\n${leaderboard}`,
+                { showInChat: true } // Show round results in chat too!
               );
               break;
 
@@ -243,7 +245,8 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               addSystemMessage(
                 `🏆 **Game Over!**\n\n` +
                 `🎉 **${winner.playerName}** wins with ${winner.totalScore} points!\n\n` +
-                `**Final Standings:**\n${finalBoard}`
+                `**Final Standings:**\n${finalBoard}`,
+                { showInChat: true } // Show game results in main chat too!
               );
               break;
           }

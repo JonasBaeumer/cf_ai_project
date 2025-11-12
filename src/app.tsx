@@ -168,8 +168,10 @@ export default function Chat() {
         // Don't pass extraData - not available in this scope
       );
     },
-    addSystemMessage: (content: string) => {
+    addSystemMessage: (content: string, options?: { showInChat?: boolean }) => {
       console.log('[app.tsx] addSystemMessage called:', content.substring(0, 50));
+      
+      // Always add to sidebar
       setSystemMessages(prev => {
         const newMessages = [
           ...prev,
@@ -182,6 +184,16 @@ export default function Chat() {
         console.log('[app.tsx] systemMessages count:', newMessages.length);
         return newMessages;
       });
+
+      // Also add to main chat if requested
+      if (options?.showInChat) {
+        sendMessage(
+          {
+            role: "assistant",
+            parts: [{ type: "text", text: content }]
+          }
+        );
+      }
     }
   };
 
