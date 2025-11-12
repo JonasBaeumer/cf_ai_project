@@ -14,6 +14,7 @@ import { Toggle } from "@/components/toggle/Toggle";
 import { Textarea } from "@/components/textarea/Textarea";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
 import { ToolInvocationCard } from "@/components/tool-invocation-card/ToolInvocationCard";
+import { SystemMessage } from "@/components/system-message/SystemMessage";
 import { AgentContext } from "@/contexts/AgentContext";
 
 // Icon imports
@@ -128,6 +129,13 @@ export default function Chat() {
     agent
   });
 
+  // State for system messages (server notifications)
+  const [systemMessages, setSystemMessages] = useState<Array<{
+    id: string;
+    content: string;
+    timestamp: number;
+  }>>([]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     agentMessages.length > 0 && scrollToBottom();
@@ -149,7 +157,7 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Provide sendMessage to all child components via context
+  // Provide sendMessage and addSystemMessage to all child components via context
   const agentContextValue = {
     sendMessage: async (text: string) => {
       await sendMessage(
@@ -159,6 +167,16 @@ export default function Chat() {
         }
         // Don't pass extraData - not available in this scope
       );
+    },
+    addSystemMessage: (content: string) => {
+      setSystemMessages(prev => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          content,
+          timestamp: Date.now()
+        }
+      ]);
     }
   };
 
@@ -248,6 +266,15 @@ export default function Chat() {
               </Card>
             </div>
           )}
+
+          {/* Render system messages */}
+          {systemMessages.map((sysMsg) => (
+            <SystemMessage
+              key={sysMsg.id}
+              content={sysMsg.content}
+              timestamp={sysMsg.timestamp}
+            />
+          ))}
 
           {agentMessages.map((m, index) => {
             const isUser = m.role === "user";

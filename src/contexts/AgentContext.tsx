@@ -1,16 +1,17 @@
 import { createContext, useContext } from 'react';
 
 /**
- * Context for sending messages to the AI agent from anywhere in the app
+ * Context for sending messages to the AI agent and adding system messages
  */
 interface AgentContextType {
   sendMessage: (text: string) => Promise<void>;
+  addSystemMessage: (content: string) => void;
 }
 
 export const AgentContext = createContext<AgentContextType | null>(null);
 
 /**
- * Hook to access agent message sending capability
+ * Hook to access agent message sending capability and system message addition
  */
 export function useAgentContext() {
   const context = useContext(AgentContext);

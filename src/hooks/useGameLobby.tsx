@@ -82,8 +82,8 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Get agent context to send notifications
-  const { sendMessage } = useAgentContext();
+  // Get agent context to display system messages
+  const { addSystemMessage } = useAgentContext();
 
   /**
    * Send answer to the server
@@ -188,10 +188,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               break;
             
             case 'countdown':
-              // Server broadcasting countdown - send message WITH the text
+              // Server broadcasting countdown - display as system message
               console.log(`⏱️ Countdown: ${message.data.message}`);
-              sendMessage(message.data.message)
-                .catch(err => console.error('Failed to send countdown:', err));
+              addSystemMessage(message.data.message);
               break;
 
             case 'flag':
@@ -208,13 +207,13 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: null,
               }));
               
-              // Send flag directly to agent with all data
-              console.log(`🎮 Sending flag for round ${message.data.roundNumber}`);
-              sendMessage(
+              // Display flag as system message
+              console.log(`🎮 Displaying flag for round ${message.data.roundNumber}`);
+              addSystemMessage(
                 `🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\n` +
                 `${message.data.flagEmoji}\n\n` +
                 `Which country is this? You have 15 seconds! ⏱️`
-              ).catch(err => console.error('Failed to send flag:', err));
+              );
               break;
 
             case 'round_result':
@@ -225,17 +224,17 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: message.data,
               }));
               
-              // Send results directly with all data
-              console.log(`⏱️ Sending round results`);
+              // Display results as system message
+              console.log(`⏱️ Displaying round results`);
               const leaderboard = message.data.leaderboard
                 .map((p: any, i: number) => `${i + 1}. ${p.playerName}: ${p.totalScore} pts`)
                 .join('\n');
               
-              sendMessage(
+              addSystemMessage(
                 `⏱️ **Round Over!**\n\n` +
                 `The correct answer was: **${message.data.correctAnswer}** ${message.data.correctFlag}\n\n` +
                 `**Leaderboard:**\n${leaderboard}`
-              ).catch(err => console.error('Failed to send results:', err));
+              );
               break;
 
             case 'game_ended':
@@ -246,18 +245,18 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 finalLeaderboard: message.data.leaderboard,
               }));
               
-              // Send final results with winner
-              console.log(`🏆 Sending game end results`);
+              // Display final results as system message
+              console.log(`🏆 Displaying game end results`);
               const winner = message.data.winner;
               const finalBoard = message.data.leaderboard
                 .map((p: any, i: number) => `${i + 1}. ${p.playerName}: ${p.totalScore} pts`)
                 .join('\n');
               
-              sendMessage(
+              addSystemMessage(
                 `🏆 **Game Over!**\n\n` +
                 `🎉 **${winner.playerName}** wins with ${winner.totalScore} points!\n\n` +
                 `**Final Standings:**\n${finalBoard}`
-              ).catch(err => console.error('Failed to send game end:', err));
+              );
               break;
           }
         } catch (err) {
@@ -285,7 +284,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
       console.error('Error creating WebSocket:', err);
         setError('Failed to connect');
     }
-  }, [invitationCode, playerId, fetchPlayers, sendMessage]);
+  }, [invitationCode, playerId, fetchPlayers, addSystemMessage]);
 
   /**
    * Connect on mount and cleanup on unmount
