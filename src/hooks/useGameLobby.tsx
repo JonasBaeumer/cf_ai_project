@@ -187,7 +187,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
             case 'countdown':
               // Server broadcasting countdown - display as system message
               console.log(`[useGameLobby ${invitationCode.slice(-4)}] → addSystemMessage (countdown):`, message.data.message);
-              addSystemMessage(message.data.message, { showInChat: true });
+              addSystemMessage(message.data.message);
               break;
 
             case 'flag':
@@ -206,8 +206,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               addSystemMessage(
                 `🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\n` +
                 `${message.data.flagEmoji}\n\n` +
-                `Which country is this? You have 15 seconds! ⏱️`,
-                { showInChat: true } // Show flag in chat!
+                `Which country is this? You have 15 seconds! ⏱️`
               );
               break;
 
@@ -225,8 +224,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
               addSystemMessage(
                 `⏱️ **Round Over!**\n\n` +
                 `The correct answer was: **${message.data.correctAnswer}** ${message.data.correctFlag}\n\n` +
-                `**Leaderboard:**\n${leaderboard}`,
-                { showInChat: true } // Show round results in chat too!
+                `**Leaderboard:**\n${leaderboard}`
               );
               break;
 
