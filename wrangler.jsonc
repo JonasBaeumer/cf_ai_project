@@ -30,11 +30,7 @@
     },
     {
       "tag": "v2",
-      "deleted_classes": ["GameLobby"]
-    },
-    {
-      "tag": "v3",
-      "new_classes": ["GameLobby"]
+      "new_sqlite_classes": ["GameLobby"]
     }
   ]
 }
