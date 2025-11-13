@@ -30,16 +30,11 @@
     },
     {
       "tag": "v2",
-      "new_classes": ["GameLobby"]
+      "deleted_classes": ["GameLobby"]
     },
     {
       "tag": "v3",
-      "renamed_classes": [
-        {
-          "from": "GameLobby",
-          "to": "GameLobby"
-        }
-      ]
+      "new_classes": ["GameLobby"]
     }
   ]
 }
