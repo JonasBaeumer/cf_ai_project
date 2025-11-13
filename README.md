@@ -58,6 +58,11 @@ This project is a **real-time multiplayer country guessing game** that combines 
 - **Dual-Channel Updates**: Game events appear in both a dedicated sidebar and the main chat
 - **Player Status Tracking**: Connection/disconnection notifications
 - **Lobby Updates**: Automatic player list synchronization
+- **Player-to-Player Chat**: Unified chat interface with toggle between AI Agent and Players mode
+  - Persistent chat history stored in Durable Object
+  - Real-time message broadcasting to all lobby members
+  - Messages appear in Game Events sidebar
+  - Automatic chat history loading for new players
 
 ### 🎨 Modern UI/UX
 
