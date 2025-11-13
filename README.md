@@ -38,12 +38,14 @@ This project is a **real-time multiplayer country guessing game** that combines 
 ## ✨ Key Features
 
 ### 🤖 AI Agent Integration
+
 - Natural language interaction for game management
 - Contextual tool invocation with human-in-the-loop confirmation
 - Intelligent game state tracking and progression
 - Automated countdowns and result announcements
 
 ### 🎮 Multiplayer Game Mechanics
+
 - **Lobby System**: Create private game rooms with unique invitation codes
 - **Real-Time Synchronization**: All players see game events simultaneously via WebSockets
 - **Timed Rounds**: 15-second rounds with automatic progression
@@ -51,12 +53,14 @@ This project is a **real-time multiplayer country guessing game** that combines 
 - **Live Leaderboards**: Real-time ranking updates after each round
 
 ### 🔄 Real-Time Communication
+
 - **WebSocket Hibernation API**: Efficient connection management that allows Durable Objects to hibernate when idle
 - **Dual-Channel Updates**: Game events appear in both a dedicated sidebar and the main chat
 - **Player Status Tracking**: Connection/disconnection notifications
 - **Lobby Updates**: Automatic player list synchronization
 
 ### 🎨 Modern UI/UX
+
 - **Dual-Pane Interface**: Separate chat and game events display
 - **Dark/Light Theme**: Automatic theme switching based on system preferences
 - **Responsive Design**: Optimized for desktop and mobile devices
@@ -122,6 +126,7 @@ The application follows a modern serverless architecture leveraging Cloudflare's
 ### Architecture Highlights
 
 #### 1. **Chat Durable Object** (`Chat` class)
+
 - **Purpose**: Manages AI agent conversations and tool execution
 - **Persistence**: Uses SQLite to store chat history and player state
 - **Responsibilities**:
@@ -131,6 +136,7 @@ The application follows a modern serverless architecture leveraging Cloudflare's
   - Message history management
 
 #### 2. **GameLobby Durable Object** (`GameLobby` class)
+
 - **Purpose**: Orchestrates multiplayer game sessions
 - **Persistence**: Uses Durable Object storage for game state
 - **Responsibilities**:
@@ -141,12 +147,14 @@ The application follows a modern serverless architecture leveraging Cloudflare's
   - Broadcasting game events to all connected players
 
 #### 3. **WebSocket Hibernation API**
+
 - Efficiently manages long-lived WebSocket connections
 - Allows Durable Objects to be evicted from memory during inactivity
 - Automatically wakes up the object when messages arrive
 - Reduces costs and improves scalability
 
 #### 4. **Tool System**
+
 The AI agent exposes several tools that players can invoke through natural language:
 
 ```typescript
@@ -161,6 +169,7 @@ The AI agent exposes several tools that players can invoke through natural langu
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React 19.2**: Modern UI with hooks and concurrent features
 - **TypeScript**: Type-safe development
 - **Vite**: Fast build tool and dev server
@@ -169,18 +178,21 @@ The AI agent exposes several tools that players can invoke through natural langu
 - **AI SDK (Vercel)**: React hooks for AI chat integration
 
 ### Backend
+
 - **Cloudflare Workers**: Serverless edge computing
 - **Durable Objects**: Stateful coordination and storage
 - **WebSocket Hibernation API**: Efficient real-time communication
 - **TypeScript**: End-to-end type safety
 
 ### AI & Tools
+
 - **Cloudflare Agents SDK** (`agents`): Framework for building AI agents
 - **OpenAI GPT-4**: Natural language understanding
 - **AI SDK** (`ai`): Unified AI interface with tool support
 - **Zod**: Schema validation for tool parameters
 
 ### Development Tools
+
 - **Wrangler**: Cloudflare Workers CLI
 - **Biome**: Fast linting and formatting
 - **Vitest**: Unit testing framework
@@ -266,6 +278,7 @@ npm install
 ```
 
 This will install all required dependencies including:
+
 - Cloudflare Workers SDK
 - React and related libraries
 - AI SDK packages
@@ -294,10 +307,10 @@ If you want to deploy to Cloudflare, update `wrangler.jsonc`:
 
 ```jsonc
 {
-  "name": "your-worker-name",  // Change this to your desired worker name
+  "name": "your-worker-name", // Change this to your desired worker name
   "main": "src/server.ts",
   "compatibility_date": "2025-08-03",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat"]
   // ... rest of the config
 }
 ```
@@ -321,6 +334,7 @@ npm start
 ```
 
 This will:
+
 1. Start Vite dev server on `http://localhost:5173`
 2. Start the Cloudflare Workers local environment
 3. Initialize Durable Objects locally
@@ -380,6 +394,7 @@ npm run deploy
 ```
 
 This will:
+
 - Build the React frontend with Vite
 - Bundle the Worker code
 - Upload to Cloudflare's global network
@@ -389,6 +404,7 @@ This will:
 3. **Access Your Deployed App**:
 
 After deployment, Wrangler will output your worker URL:
+
 ```
 https://your-worker-name.your-subdomain.workers.dev
 ```
@@ -396,6 +412,7 @@ https://your-worker-name.your-subdomain.workers.dev
 ### Production Considerations
 
 #### Environment Variables
+
 Set these in your Cloudflare Workers dashboard or via Wrangler:
 
 ```bash
@@ -539,18 +556,21 @@ Add a custom domain in `wrangler.jsonc`:
 This project showcases several key Cloudflare technologies and best practices:
 
 ### 1. **Cloudflare Workers**
+
 - ✅ Edge computing with TypeScript
 - ✅ HTTP request routing and handling
 - ✅ Integration with external APIs (OpenAI)
 - ✅ Static asset serving via Workers Static Assets
 
 ### 2. **Durable Objects**
+
 - ✅ Stateful coordination across multiple clients
 - ✅ Persistent storage (KV-style and SQLite)
 - ✅ Unique ID generation and routing
 - ✅ Multiple Durable Object classes in one Worker
 
 ### 3. **WebSocket Hibernation API**
+
 - ✅ Efficient WebSocket connection management
 - ✅ Tagged WebSocket identification
 - ✅ Broadcast messaging to multiple clients
@@ -558,6 +578,7 @@ This project showcases several key Cloudflare technologies and best practices:
 - ✅ Handler methods: `webSocketMessage`, `webSocketClose`, `webSocketError`
 
 ### 4. **Agents SDK**
+
 - ✅ AI agent with tool integration
 - ✅ Human-in-the-loop confirmations
 - ✅ State persistence with SQLite
@@ -565,6 +586,7 @@ This project showcases several key Cloudflare technologies and best practices:
 - ✅ Custom tool definitions with Zod schemas
 
 ### 5. **Best Practices**
+
 - ✅ TypeScript for type safety
 - ✅ Modular code organization
 - ✅ Error handling and logging
@@ -577,6 +599,7 @@ This project showcases several key Cloudflare technologies and best practices:
 Potential improvements and features to add:
 
 ### Gameplay
+
 - [ ] Multiple difficulty levels (more countries, harder flags)
 - [ ] Power-ups and bonuses
 - [ ] Tournament mode with brackets
@@ -584,6 +607,7 @@ Potential improvements and features to add:
 - [ ] Different game modes (regions, capitals, languages)
 
 ### Technical
+
 - [ ] Cloudflare D1 for persistent game history
 - [ ] Cloudflare R2 for storing game replays
 - [ ] Cloudflare Analytics Engine for game metrics
@@ -591,6 +615,7 @@ Potential improvements and features to add:
 - [ ] Hyperdrive for external database connections
 
 ### UI/UX
+
 - [ ] Lobby chat between players
 - [ ] Player avatars and customization
 - [ ] Animated flag reveals
@@ -598,6 +623,7 @@ Potential improvements and features to add:
 - [ ] Mobile-optimized UI
 
 ### AI Agent
+
 - [ ] Multi-language support
 - [ ] Personalized hints and tips
 - [ ] Game strategy coaching

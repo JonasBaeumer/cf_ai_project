@@ -1,8 +1,8 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { Button } from "@/components/button/Button";
 import { useGameLobby } from "@/hooks/useGameLobby";
+import { useAgentContext } from "@/contexts/AgentContext";
 import { Copy, Users } from "@phosphor-icons/react";
-import { GameCard } from "./GameCard";
 
 interface LobbyCardProps {
   data: {
@@ -16,10 +16,18 @@ interface LobbyCardProps {
 
 function LobbyCardComponent({ data }: LobbyCardProps) {
   const [copied, setCopied] = useState(false);
-  const { players, gameState, connected, startGame } = useGameLobby(
-    data.invitationCode,
-    data.playerId
-  );
+  const { players, gameState, connected, startGame, sendChatMessage } =
+    useGameLobby(data.invitationCode, data.playerId);
+  const { registerPlayerChat, unregisterPlayerChat } = useAgentContext();
+
+  // Register player chat function with the main app context
+  useEffect(() => {
+    registerPlayerChat(sendChatMessage);
+    return () => {
+      unregisterPlayerChat();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount/unmount
 
   const handleCopyCode = async () => {
     try {
@@ -31,10 +39,6 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
     }
   };
 
-  const handleStartGame = async () => {
-    startGame();
-  };
-
   // Keep showing lobby card - don't switch to GameCard
   // The agent will display flags and handle answers in chat
   return (
@@ -44,10 +48,10 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
         <Users size={20} className="text-[#F48120]" />
         <h3 className="font-semibold text-lg">Game Lobby</h3>
         {connected && (
-            <span className="text-xs text-green-500">● Connected</span>
+          <span className="text-xs text-green-500">● Connected</span>
         )}
         {!connected && (
-            <span className="text-xs text-gray-400">○ Connecting...</span>
+          <span className="text-xs text-gray-400">○ Connecting...</span>
         )}
       </div>
 
@@ -58,11 +62,7 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
           <code className="text-lg font-mono font-bold text-[#F48120]">
             {data.invitationCode}
           </code>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleCopyCode}
-          >
+          <Button size="sm" variant="secondary" onClick={handleCopyCode}>
             <Copy size={14} />
             {copied ? "Copied!" : "Copy"}
           </Button>
@@ -77,21 +77,30 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
         <div className="space-y-2">
           {players && players.length > 0 ? (
             players.map((player, index) => (
-              <div key={player.id} className="flex items-center justify-between gap-2">
+              <div
+                key={player.id}
+                className="flex items-center justify-between gap-2"
+              >
                 <div className="flex items-center gap-2">
                   {/* Connection status dot */}
-                  <div className={`w-2 h-2 rounded-full ${player.connected ? 'bg-green-500' : 'bg-gray-400'}`} />
-                  
+                  <div
+                    className={`w-2 h-2 rounded-full ${player.connected ? "bg-green-500" : "bg-gray-400"}`}
+                  />
+
                   {/* Player name */}
                   <span className="text-sm">
                     {player.name}
-                    {player.id === data.playerId && <span className="text-[#F48120] ml-1">(You)</span>}
-                    {index === 0 && <span className="text-muted-foreground ml-1">(Host)</span>}
+                    {player.id === data.playerId && (
+                      <span className="text-[#F48120] ml-1">(You)</span>
+                    )}
+                    {index === 0 && (
+                      <span className="text-muted-foreground ml-1">(Host)</span>
+                    )}
                   </span>
                 </div>
-                
+
                 {/* Score - show if game is in progress */}
-                {gameState.status !== 'waiting' && (
+                {gameState.status !== "waiting" && (
                   <span className="text-sm font-semibold text-[#F48120]">
                     {player.totalScore || 0} pts
                   </span>
@@ -119,14 +128,14 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
             Ready to play? Tell me "Start the game" to begin! 🎮
           </div>
         )}
-        
+
         {/* If no players array yet, show for the creator */}
         {(!players || players.length === 0) && (
           <div className="text-sm text-muted-foreground text-center py-2 px-3 bg-[#F48120]/5 rounded">
             Ready to play? Tell me "Start the game" to begin! 🎮
           </div>
         )}
-        
+
         <Button
           variant="secondary"
           size="sm"

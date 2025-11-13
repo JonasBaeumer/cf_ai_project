@@ -9,6 +9,7 @@ These tests run against a **real deployed instance** of your GameLobby Durable O
 ### **1. Start Your Worker**
 
 **Option A: Local Development**
+
 ```bash
 npm start
 # Vite dev server starts at http://localhost:5173
@@ -16,6 +17,7 @@ npm start
 ```
 
 **Option B: Deploy to Cloudflare**
+
 ```bash
 wrangler deploy
 # Note your worker URL: https://your-worker.workers.dev
@@ -24,11 +26,13 @@ wrangler deploy
 ### **2. Run Tests**
 
 **Against localhost:**
+
 ```bash
 npm test GameLobby.integration
 ```
 
 **Against deployed worker:**
+
 ```bash
 WORKER_URL=https://your-worker.workers.dev npm test GameLobby.integration
 ```
@@ -39,14 +43,14 @@ WORKER_URL=https://your-worker.workers.dev npm test GameLobby.integration
 
 ### ✅ **What's Tested:**
 
-| Category | Tests | What It Checks |
-|----------|-------|----------------|
-| **Lobby Management** | 4 | Create, join, status, 404 handling |
-| **Game Flow** | 2 | Start game, prevent double start |
-| **WebSocket** | 1 | Connection handling (skipped by default) |
-| **Multi-Player** | 1 | Multiple concurrent joins |
-| **Error Handling** | 2 | Invalid JSON, missing fields |
-| **Load Testing** | 2 | Concurrent lobbies, many players (skipped) |
+| Category             | Tests | What It Checks                             |
+| -------------------- | ----- | ------------------------------------------ |
+| **Lobby Management** | 4     | Create, join, status, 404 handling         |
+| **Game Flow**        | 2     | Start game, prevent double start           |
+| **WebSocket**        | 1     | Connection handling (skipped by default)   |
+| **Multi-Player**     | 1     | Multiple concurrent joins                  |
+| **Error Handling**   | 2     | Invalid JSON, missing fields               |
+| **Load Testing**     | 2     | Concurrent lobbies, many players (skipped) |
 
 ### ⚠️ **What's NOT Tested:**
 
@@ -107,6 +111,7 @@ npm test GameLobby.integration -- --watch
 ## 📊 Understanding Test Results
 
 ### **Success Output:**
+
 ```
 ✓ GameLobby Integration: Lobby Management > should create a new lobby (45ms)
 ✓ GameLobby Integration: Lobby Management > should allow players to join a lobby (123ms)
@@ -117,15 +122,17 @@ Test Files  1 passed (1)
 ```
 
 ### **Failure Output:**
+
 ```
 ✕ GameLobby Integration: Lobby Management > should create a new lobby (45ms)
   → expect(received).toBe(expected)
-  
+
   Expected: 200
   Received: 404
 ```
 
 **Common Failures:**
+
 1. **404 errors**: Worker not running or wrong URL
 2. **Timeouts**: Worker slow to respond (increase timeout)
 3. **Connection refused**: Worker not started (`npm run dev`)
@@ -136,11 +143,13 @@ Test Files  1 passed (1)
 ## 🐛 Troubleshooting
 
 ### **"Connection refused" Error:**
+
 ```
 Error: connect ECONNREFUSED 127.0.0.1:8787
 ```
 
 **Solution:** Start your worker first!
+
 ```bash
 npm run dev
 # In another terminal:
@@ -148,33 +157,39 @@ npm test GameLobby.integration
 ```
 
 ### **"404 Not Found" Error:**
+
 ```
 Expected: 200
 Received: 404
 ```
 
 **Solution:** Your API routes might not be wired up yet. Check:
+
 1. Is GameLobby bound in `wrangler.jsonc`?
 2. Are routes defined in `src/server.ts`?
 3. Is the worker actually deployed?
 
 ### **Tests Hang Forever:**
+
 ```
 GameLobby Integration: Lobby Management > should create a new lobby
   (test never finishes)
 ```
 
-**Solution:** 
+**Solution:**
+
 1. Check if worker is responding: `curl http://localhost:8787/api/lobby/TEST/status`
 2. Increase timeout in test
 3. Check worker logs for errors
 
 ### **"Invalid JSON" Errors:**
+
 ```
 SyntaxError: Unexpected token < in JSON
 ```
 
 **Solution:** Worker returned HTML instead of JSON. Check:
+
 1. Are you hitting the right endpoint?
 2. Did worker crash? Check logs: `wrangler tail`
 
@@ -183,6 +198,7 @@ SyntaxError: Unexpected token < in JSON
 ## 🎯 What Each Test Does
 
 ### **Test: "should create a new lobby"**
+
 ```typescript
 POST /api/lobby/create
 Body: { hostId, hostName, invitationCode }
@@ -193,6 +209,7 @@ Expects:
 ```
 
 ### **Test: "should allow players to join a lobby"**
+
 ```typescript
 POST /api/lobby/{code}/join
 Body: { playerId, playerName }
@@ -203,6 +220,7 @@ Expects:
 ```
 
 ### **Test: "should return lobby status"**
+
 ```typescript
 GET /api/lobby/{code}/status
 
@@ -212,6 +230,7 @@ Expects:
 ```
 
 ### **Test: "should start a game"**
+
 ```typescript
 POST /api/lobby/{code}/start
 
@@ -227,6 +246,7 @@ Expects:
 Sometimes automated tests aren't enough. Here's how to test manually:
 
 ### **1. Create a Lobby:**
+
 ```bash
 curl -X POST http://localhost:8787/api/lobby/create \
   -H "Content-Type: application/json" \
@@ -238,6 +258,7 @@ curl -X POST http://localhost:8787/api/lobby/create \
 ```
 
 ### **2. Join the Lobby:**
+
 ```bash
 curl -X POST http://localhost:8787/api/lobby/ABC123/join \
   -H "Content-Type: application/json" \
@@ -248,16 +269,19 @@ curl -X POST http://localhost:8787/api/lobby/ABC123/join \
 ```
 
 ### **3. Check Status:**
+
 ```bash
 curl http://localhost:8787/api/lobby/ABC123/status
 ```
 
 ### **4. Start Game:**
+
 ```bash
 curl -X POST http://localhost:8787/api/lobby/ABC123/start
 ```
 
 ### **5. Watch Logs:**
+
 ```bash
 # Local dev
 # Logs appear in terminal where you ran `npm run dev`
@@ -271,19 +295,23 @@ wrangler tail
 ## 📝 Adding New Tests
 
 ### **Template:**
+
 ```typescript
 describe("GameLobby Integration: Your Feature", () => {
   it("should do something", async () => {
     // Arrange: Create test data
     const { lobbyCode } = await createLobby();
-    
+
     // Act: Make request
-    const response = await fetch(`${WORKER_URL}/api/lobby/${lobbyCode}/something`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: "test" })
-    });
-    
+    const response = await fetch(
+      `${WORKER_URL}/api/lobby/${lobbyCode}/something`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: "test" })
+      }
+    );
+
     // Assert: Check response
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -317,6 +345,7 @@ describe("GameLobby Integration: Your Feature", () => {
 ## 📞 Need Help?
 
 Common issues:
+
 - Worker not responding → Check `npm run dev` is running
 - 404 errors → Check API routes are configured
 - Timeout errors → Increase timeout or check worker logs
@@ -325,4 +354,3 @@ Common issues:
 ---
 
 Good luck! 🎯
-

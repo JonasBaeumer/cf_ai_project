@@ -14,7 +14,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Test message",
         source: "game_server",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(validMessage)).toBe(true);
@@ -23,7 +23,7 @@ describe("Phase 1: System Message Infrastructure", () => {
     it("should reject user messages", () => {
       const userMessage = {
         role: "user",
-        content: "Hello",
+        content: "Hello"
       };
 
       expect(isSystemMessage(userMessage)).toBe(false);
@@ -32,7 +32,7 @@ describe("Phase 1: System Message Infrastructure", () => {
     it("should reject assistant messages", () => {
       const assistantMessage = {
         role: "assistant",
-        content: "Hello",
+        content: "Hello"
       };
 
       expect(isSystemMessage(assistantMessage)).toBe(false);
@@ -42,7 +42,7 @@ describe("Phase 1: System Message Infrastructure", () => {
       const invalidMessage = {
         role: "system",
         content: "Test",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(invalidMessage)).toBe(false);
@@ -52,7 +52,7 @@ describe("Phase 1: System Message Infrastructure", () => {
       const invalidMessage = {
         role: "system",
         content: "Test",
-        source: "game_server",
+        source: "game_server"
       };
 
       expect(isSystemMessage(invalidMessage)).toBe(false);
@@ -63,12 +63,11 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Test",
         source: "other_source",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(invalidMessage)).toBe(false);
     });
-
   });
 
   describe("Message Structure Validation", () => {
@@ -77,7 +76,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "🎮 Starting in 3...",
         source: "game_server",
-        timestamp: 1234567890,
+        timestamp: 1234567890
       };
 
       expect(message.role).toBe("system");
@@ -91,7 +90,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "🏆 Winner! 🎉",
         source: "game_server",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -104,7 +103,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Round 1\nFlag: 🇺🇸\nGuess now!",
         source: "game_server",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -116,7 +115,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "",
         source: "game_server",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -127,7 +126,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "A".repeat(1000),
         source: "game_server",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -139,7 +138,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Special: <>&\"'",
         source: "game_server",
-        timestamp: Date.now(),
+        timestamp: Date.now()
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -155,7 +154,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Test",
         source: "game_server",
-        timestamp: now,
+        timestamp: now
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -168,7 +167,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Old message",
         source: "game_server",
-        timestamp: past,
+        timestamp: past
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -181,7 +180,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Future message",
         source: "game_server",
-        timestamp: future,
+        timestamp: future
       };
 
       expect(isSystemMessage(message)).toBe(true);
@@ -193,7 +192,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Test",
         source: "game_server",
-        timestamp: "not a number",
+        timestamp: "not a number"
       };
 
       expect(isSystemMessage(message)).toBe(false);
@@ -204,7 +203,7 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Test",
         source: "game_server",
-        timestamp: null,
+        timestamp: null
       };
 
       expect(isSystemMessage(message)).toBe(false);
@@ -215,12 +214,10 @@ describe("Phase 1: System Message Infrastructure", () => {
         role: "system",
         content: "Test",
         source: "game_server",
-        timestamp: undefined,
+        timestamp: undefined
       };
 
       expect(isSystemMessage(message)).toBe(false);
     });
   });
 });
-
-

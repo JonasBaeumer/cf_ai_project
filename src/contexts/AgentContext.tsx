@@ -1,11 +1,18 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext } from "react";
 
 /**
  * Context for sending messages to the AI agent and adding system messages
  */
 interface AgentContextType {
   sendMessage: (text: string) => Promise<void>;
-  addSystemMessage: (content: string, options?: { showInChat?: boolean }) => void;
+  addSystemMessage: (
+    content: string,
+    options?: { showInChat?: boolean }
+  ) => void;
+  sendPlayerMessage: ((message: string) => void) | null;
+  registerPlayerChat: (sendFn: (message: string) => void) => void;
+  unregisterPlayerChat: () => void;
+  hasActiveLobby: boolean;
 }
 
 export const AgentContext = createContext<AgentContextType | null>(null);
@@ -16,8 +23,9 @@ export const AgentContext = createContext<AgentContextType | null>(null);
 export function useAgentContext() {
   const context = useContext(AgentContext);
   if (!context) {
-    throw new Error('useAgentContext must be used within AgentContext.Provider');
+    throw new Error(
+      "useAgentContext must be used within AgentContext.Provider"
+    );
   }
   return context;
 }
-

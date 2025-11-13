@@ -39,5 +39,3 @@ export function isSystemMessage(message: any): message is SystemMessage {
     typeof message.timestamp === "number"
   );
 }
-
-

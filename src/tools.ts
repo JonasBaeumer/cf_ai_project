@@ -15,18 +15,18 @@ import { scheduleSchema } from "agents/schedule";
  */
 async function getOrCreatePlayerId(): Promise<string> {
   const { agent } = getCurrentAgent<Chat>();
-  
+
   // Try to get existing playerId from agent state
   const existingState = agent?.state as { playerId?: string } | undefined;
-  
+
   if (existingState?.playerId) {
     console.log(`Using existing playerId: ${existingState.playerId}`);
     return existingState.playerId;
   }
-  
+
   // Generate new playerId if none exists
   const newPlayerId = crypto.randomUUID();
-  
+
   // Store it in agent state for future calls
   if (agent) {
     await agent.setState({
@@ -34,7 +34,7 @@ async function getOrCreatePlayerId(): Promise<string> {
       playerId: newPlayerId
     });
   }
-  
+
   console.log(`Created new playerId: ${newPlayerId}`);
   return newPlayerId;
 }
@@ -64,18 +64,19 @@ const getLocalTime = tool({
 });
 
 const createGameLobby = tool({
-  description: "Create a new game lobby for 'Guess the Country'. Returns an invitation code that other players can use to join.",
+  description:
+    "Create a new game lobby for 'Guess the Country'. Returns an invitation code that other players can use to join.",
   inputSchema: z.object({
     playerName: z.string().describe("The name is the player creating the lobby")
   }),
-  execute: async ({playerName}) => {
+  execute: async ({ playerName }) => {
     try {
       const invitationCode = `GAME-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
       const playerId = await getOrCreatePlayerId();
-      
+
       // Get base URL from environment variable (set in .dev.vars for local development)
-      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
-      
+      const baseURL = process.env.API_BASE_URL || "http://localhost:5173";
+
       const response = await fetch(`${baseURL}/api/lobby/create`, {
         method: "POST",
         headers: {
@@ -93,9 +94,9 @@ const createGameLobby = tool({
           error: `Failed to create lobby: ${response.statusText}`
         };
       }
-      const data = await response.json() as { invitationCode: string };
+      const data = (await response.json()) as { invitationCode: string };
       return {
-        success: true, 
+        success: true,
         invitationCode: data.invitationCode,
         playerId: playerId,
         playerName: playerName
@@ -111,37 +112,46 @@ const createGameLobby = tool({
 });
 
 const joinGameLobby = tool({
-  description: "Join an existing 'Guess the Country' game lobby using an invitation code.",
+  description:
+    "Join an existing 'Guess the Country' game lobby using an invitation code.",
   inputSchema: z.object({
     playerName: z.string().describe("The name of the player joining the lobby"),
-    invitationCode: z.string().describe("The invitation code of the lobby to join")
+    invitationCode: z
+      .string()
+      .describe("The invitation code of the lobby to join")
   }),
-  execute: async ({playerName, invitationCode}) => {
+  execute: async ({ playerName, invitationCode }) => {
     try {
       const playerId = await getOrCreatePlayerId();
-      
+
       // Get base URL from environment variable (set in .dev.vars for local development)
-      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
-      
-      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/join`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          playerId,
-          playerName
-        })
-      });
-      
+      const baseURL = process.env.API_BASE_URL || "http://localhost:5173";
+
+      const response = await fetch(
+        `${baseURL}/api/lobby/${invitationCode}/join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            playerId,
+            playerName
+          })
+        }
+      );
+
       if (!response.ok) {
         return {
           success: false,
           error: `Failed to join lobby: ${response.statusText}`
         };
       }
-      
-      const data = await response.json() as { success: boolean, players: Array<{id: string, name: string}> };
+
+      const data = (await response.json()) as {
+        success: boolean;
+        players: Array<{ id: string; name: string }>;
+      };
       return {
         success: true,
         invitationCode: invitationCode,
@@ -160,23 +170,29 @@ const joinGameLobby = tool({
 });
 
 const startGame = tool({
-  description: "Start the game in a 'Guess the Country' lobby. The server will handle the countdown and send flags automatically to all players. After calling this, the game begins immediately.",
+  description:
+    "Start the game in a 'Guess the Country' lobby. The server will handle the countdown and send flags automatically to all players. After calling this, the game begins immediately.",
   inputSchema: z.object({
-    invitationCode: z.string().describe("The invitation code of the lobby to start the game"),
+    invitationCode: z
+      .string()
+      .describe("The invitation code of the lobby to start the game"),
     playerName: z.string().describe("The name of the player starting the game")
   }),
-  execute: async({invitationCode, playerName}) => {
+  execute: async ({ invitationCode, playerName }) => {
     try {
       const playerId = await getOrCreatePlayerId();
       // Get base URL from environment variable (set in .dev.vars for local development)
-      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
-      
-      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
+      const baseURL = process.env.API_BASE_URL || "http://localhost:5173";
+
+      const response = await fetch(
+        `${baseURL}/api/lobby/${invitationCode}/start`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
         }
-      });
+      );
       if (!response.ok) {
         return {
           success: false,
@@ -200,27 +216,35 @@ const startGame = tool({
 });
 
 const getGameStatus = tool({
-  description: "Get the current status of a game lobby, including players, scores, and current round information. Only use this when the user explicitly asks for the game status or leaderboard. Do NOT call this automatically after starting a game - the server sends updates via the sidebar.",
+  description:
+    "Get the current status of a game lobby, including players, scores, and current round information. Only use this when the user explicitly asks for the game status or leaderboard. Do NOT call this automatically after starting a game - the server sends updates via the sidebar.",
   inputSchema: z.object({
     invitationCode: z.string().describe("The invitation code of the game lobby")
   }),
-  execute: async({invitationCode}) => {
+  execute: async ({ invitationCode }) => {
     try {
-      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
-      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/status`);
-      
+      const baseURL = process.env.API_BASE_URL || "http://localhost:5173";
+      const response = await fetch(
+        `${baseURL}/api/lobby/${invitationCode}/status`
+      );
+
       if (!response.ok) {
         return {
           success: false,
           error: `Failed to get game status: ${response.statusText}`
         };
       }
-      
-      const data = await response.json() as {
-        players: Array<{id: string, name: string, connected: boolean, totalScore: number}>,
-        gameState: any
+
+      const data = (await response.json()) as {
+        players: Array<{
+          id: string;
+          name: string;
+          connected: boolean;
+          totalScore: number;
+        }>;
+        gameState: any;
       };
-      
+
       return {
         success: true,
         players: data.players,
@@ -237,34 +261,40 @@ const getGameStatus = tool({
 });
 
 const submitAnswer = tool({
-  description: "Submit a player's answer for the current round in a Guess the Country game. Call this ONLY when the user provides their answer. The round results will automatically appear in the sidebar when all players answer or the timer expires.",
+  description:
+    "Submit a player's answer for the current round in a Guess the Country game. Call this ONLY when the user provides their answer. The round results will automatically appear in the sidebar when all players answer or the timer expires.",
   inputSchema: z.object({
-    invitationCode: z.string().describe("The invitation code of the game lobby"),
+    invitationCode: z
+      .string()
+      .describe("The invitation code of the game lobby"),
     answer: z.string().describe("The player's answer (country name)")
   }),
-  execute: async({invitationCode, answer}) => {
+  execute: async ({ invitationCode, answer }) => {
     try {
       const playerId = await getOrCreatePlayerId();
-      const baseURL = process.env.API_BASE_URL || 'http://localhost:5173';
-      
-      const response = await fetch(`${baseURL}/api/lobby/${invitationCode}/answer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          playerId,
-          answer
-        })
-      });
-      
+      const baseURL = process.env.API_BASE_URL || "http://localhost:5173";
+
+      const response = await fetch(
+        `${baseURL}/api/lobby/${invitationCode}/answer`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            playerId,
+            answer
+          })
+        }
+      );
+
       if (!response.ok) {
         return {
           success: false,
           error: `Failed to submit answer: ${response.statusText}`
         };
       }
-      
+
       return {
         success: true,
         message: "Answer submitted! Waiting for other players..."

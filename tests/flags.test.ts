@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { 
-  countries, 
-  getRandomCountry, 
-  isAnswerCorrect, 
+import {
+  countries,
+  getRandomCountry,
+  isAnswerCorrect,
   getCountryByName,
-  type CountryFlags 
+  type CountryFlags
 } from "../src/lib/flags";
 
 // ============================================
@@ -35,7 +35,7 @@ describe("Countries Data", () => {
   });
 
   it("should have unique country names", () => {
-    const names = countries.map(c => c.name.toLowerCase());
+    const names = countries.map((c) => c.name.toLowerCase());
     const uniqueNames = new Set(names);
     expect(uniqueNames.size).toBe(names.length);
   });
@@ -55,7 +55,7 @@ describe("Countries Data", () => {
 describe("getRandomCountry()", () => {
   it("should return a valid country object", () => {
     const country = getRandomCountry();
-    
+
     expect(country).toBeDefined();
     expect(country.name).toBeDefined();
     expect(country.emoji).toBeDefined();
@@ -63,8 +63,8 @@ describe("getRandomCountry()", () => {
 
   it("should return a country from the countries list", () => {
     const country = getRandomCountry();
-    const exists = countries.some(c => c.name === country.name);
-    
+    const exists = countries.some((c) => c.name === country.name);
+
     expect(exists).toBe(true);
   });
 
@@ -78,7 +78,7 @@ describe("getRandomCountry()", () => {
 
     const results = new Set<string>();
     const iterations = Math.min(20, countries.length * 3);
-    
+
     for (let i = 0; i < iterations; i++) {
       results.add(getRandomCountry().name);
     }
@@ -178,7 +178,7 @@ describe("isAnswerCorrect()", () => {
 describe("getCountryByName()", () => {
   it("should find country by exact name match", () => {
     const country = getCountryByName("United States");
-    
+
     expect(country).toBeDefined();
     expect(country?.name).toBe("United States");
     expect(country?.emoji).toBe("🇺🇸");
@@ -212,7 +212,7 @@ describe("getCountryByName()", () => {
 
   it("should handle leading/trailing whitespace (based on implementation)", () => {
     const withSpaces = getCountryByName("  United States  ");
-    
+
     // If this fails, consider updating getCountryByName to trim inputs
     expect(withSpaces).toBeUndefined();
   });
@@ -243,8 +243,8 @@ describe("Integration: Game Flow Simulation", () => {
 
   it("should handle alternate names in game flow", () => {
     // Find a country with alternate names
-    const countryWithAlts = countries.find(c => 
-      c.alternate_names && c.alternate_names.length > 0
+    const countryWithAlts = countries.find(
+      (c) => c.alternate_names && c.alternate_names.length > 0
     );
 
     if (!countryWithAlts || !countryWithAlts.alternate_names) {
@@ -257,4 +257,3 @@ describe("Integration: Game Flow Simulation", () => {
     expect(isAnswerCorrect(alternateAnswer, countryWithAlts)).toBe(true);
   });
 });
-

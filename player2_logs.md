@@ -36,7 +36,7 @@ app.tsx:172 [app.tsx] addSystemMessage called: ⏱️ **Round Over!**
 The correct answer was: **Unit
 app.tsx:182 [app.tsx] systemMessages count: 6
 useGameLobby.tsx:169 [useGameLobby 2DF1] WS message: flag
-app.tsx:172 [app.tsx] addSystemMessage called: 🚩 **Round 2/3**
+app.tsx:172 [app.tsx] addSystemMessage called: 🚩 **Round 2/3\*\*
 
 🇲🇬
 
@@ -48,7 +48,7 @@ app.tsx:172 [app.tsx] addSystemMessage called: ⏱️ **Round Over!**
 The correct answer was: **Mada
 app.tsx:182 [app.tsx] systemMessages count: 8
 useGameLobby.tsx:169 [useGameLobby 2DF1] WS message: flag
-app.tsx:172 [app.tsx] addSystemMessage called: 🚩 **Round 3/3**
+app.tsx:172 [app.tsx] addSystemMessage called: 🚩 **Round 3/3\*\*
 
 🇩🇪
 
@@ -72,6 +72,7 @@ performSyncWorkOnRoot @ react-dom_client.js?v=76c7ce93:13517
 flushSyncWorkAcrossRoots_impl @ react-dom_client.js?v=76c7ce93:13414
 processRootScheduleInMicrotask @ react-dom_client.js?v=76c7ce93:13437
 (anonymous) @ react-dom_client.js?v=76c7ce93:13531
+
 <div>
 exports.jsxDEV @ react_jsx-dev-runtime.js?v=76c7ce93:247
 (anonymous) @ app.tsx:286
@@ -182,7 +183,7 @@ performWorkOnRoot @ react-dom_client.js?v=76c7ce93:11766
 performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=76c7ce93:13505
 performWorkUntilDeadline @ react-dom_client.js?v=76c7ce93:36Understand this error
 useGameLobby.tsx:169 [useGameLobby 2DF1] WS message: game_ended
-app.tsx:172 [app.tsx] addSystemMessage called: 🏆 **Game Over!**
+app.tsx:172 [app.tsx] addSystemMessage called: 🏆 **Game Over!\*\*
 
 🎉 **player1** wins with 245.32
 app.tsx:182 [app.tsx] systemMessages count: 11
@@ -214,13 +215,12 @@ Hi my name is player 2 and I want to play a game can you join this lobby? GAME-4
 
 A
 
-
 tool-joinGameLobby
 ✓ Completed
 Arguments:
 {
-  "playerName": "player 2",
-  "invitationCode": "GAME-4A682DF1"
+"playerName": "player 2",
+"invitationCode": "GAME-4A682DF1"
 }
 Game Lobby
 ● Connected
@@ -247,18 +247,17 @@ Great Britain
 
 A
 
-
 tool-submitAnswer
 ✓ Completed
 Arguments:
 {
-  "invitationCode": "GAME-4A682DF1",
-  "answer": "Great Britain"
+"invitationCode": "GAME-4A682DF1",
+"answer": "Great Britain"
 }
 Result:
 {
-  "success": true,
-  "message": "Answer submitted! Waiting for other players..."
+"success": true,
+"message": "Answer submitted! Waiting for other players..."
 }
 Your answer, "Great Britain," has been submitted successfully! Now we're waiting for the other players to respond. Let me know if you need anything else!
 
@@ -270,18 +269,17 @@ Magascar
 
 A
 
-
 tool-submitAnswer
 ✓ Completed
 Arguments:
 {
-  "invitationCode": "GAME-4A682DF1",
-  "answer": "Magascar"
+"invitationCode": "GAME-4A682DF1",
+"answer": "Magascar"
 }
 Result:
 {
-  "success": true,
-  "message": "Answer submitted! Waiting for other players..."
+"success": true,
+"message": "Answer submitted! Waiting for other players..."
 }
 Your answer, "Magascar," has been submitted successfully! We're still waiting for the other players. Let me know if you need more help!
 
@@ -293,17 +291,16 @@ Germany
 
 A
 
-
 tool-submitAnswer
 ✓ Completed
 Arguments:
 {
-  "invitationCode": "GAME-4A682DF1",
-  "answer": "Germany"
+"invitationCode": "GAME-4A682DF1",
+"answer": "Germany"
 }
 Result:
 {
-  "success": true,
-  "message": "Answer submitted! Waiting for other players..."
+"success": true,
+"message": "Answer submitted! Waiting for other players..."
 }
 Your answer, "Germany," has been submitted successfully! We'll wait for the round to progress. Let me know if you'd like to check the game status or do something else!

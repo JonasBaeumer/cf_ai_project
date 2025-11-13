@@ -1,7 +1,11 @@
 import { DurableObject } from "cloudflare:workers";
 import type { CountryFlags } from "../lib/flags";
 import { getRandomCountry } from "../lib/flags";
-import { calculateLeaderboard, evaluateRound, type PlayerAnswer } from "../lib/game-logic";
+import {
+  calculateLeaderboard,
+  evaluateRound,
+  type PlayerAnswer
+} from "../lib/game-logic";
 
 // ============================================
 // TYPES & INTERFACES
@@ -14,7 +18,12 @@ interface Player {
   totalScore: number;
 }
 
-type GameStatus = 'waiting' | 'countdown' | 'playing' | 'round_ended' | 'finished';
+type GameStatus =
+  | "waiting"
+  | "countdown"
+  | "playing"
+  | "round_ended"
+  | "finished";
 
 interface CurrentRound {
   number: number;
@@ -27,6 +36,14 @@ interface GameState {
   status: GameStatus;
   currentRound: CurrentRound | null;
   totalRounds: number;
+}
+
+interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  message: string;
+  timestamp: number;
 }
 
 // WebSocket message types
@@ -42,21 +59,23 @@ interface WSMessage {
 export class GameLobby extends DurableObject {
   // Storage keys
   private readonly STORAGE_KEYS = {
-    LOBBY_ID: 'lobbyId',
-    INVITATION_CODE: 'invitationCode',
-    HOST_ID: 'hostId',
-    PLAYERS: 'players',
-    GAME_STATE: 'gameState',
+    LOBBY_ID: "lobbyId",
+    INVITATION_CODE: "invitationCode",
+    HOST_ID: "hostId",
+    PLAYERS: "players",
+    GAME_STATE: "gameState",
+    CHAT_MESSAGES: "chatMessages"
   };
 
   // In-memory state (not persisted)
   private players: Map<string, Player> = new Map();
   // Note: WebSockets are managed by the Hibernation API via this.ctx.getWebSockets()
   private gameState: GameState = {
-    status: 'waiting',
+    status: "waiting",
     currentRound: null,
-    totalRounds: 3,
+    totalRounds: 3
   };
+  private chatMessages: ChatMessage[] = [];
   private roundTimeoutId: ReturnType<typeof setTimeout> | null = null; // Track round timer
 
   /**
@@ -64,7 +83,7 @@ export class GameLobby extends DurableObject {
    */
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    
+
     // Load state from storage when DO wakes up
     this.ctx.blockConcurrencyWhile(async () => {
       await this.loadState();
@@ -77,16 +96,24 @@ export class GameLobby extends DurableObject {
   private async loadState(): Promise<void> {
     // TODO: Load data from this.ctx.storage.get()
     // Hint: Use the STORAGE_KEYS
-    // Load: players, gameState
+    // Load: players, gameState, chatMessages
     const playersData = await this.ctx.storage.get(this.STORAGE_KEYS.PLAYERS);
     if (playersData) {
       this.players = new Map(JSON.parse(playersData as string));
     }
-    const gameStateData = await this.ctx.storage.get(this.STORAGE_KEYS.GAME_STATE);
+    const gameStateData = await this.ctx.storage.get(
+      this.STORAGE_KEYS.GAME_STATE
+    );
     if (gameStateData) {
       this.gameState = JSON.parse(gameStateData as string);
     }
-    
+    const chatMessagesData = await this.ctx.storage.get(
+      this.STORAGE_KEYS.CHAT_MESSAGES
+    );
+    if (chatMessagesData) {
+      this.chatMessages = JSON.parse(chatMessagesData as string);
+    }
+
     console.log("GameLobby state loaded");
   }
 
@@ -104,8 +131,18 @@ export class GameLobby extends DurableObject {
   private async saveState(): Promise<void> {
     // TODO: Save data to this.ctx.storage.put()
     // Convert Maps to arrays before storing (Maps can't be JSON.stringified directly)
-    await this.ctx.storage.put(this.STORAGE_KEYS.PLAYERS, JSON.stringify(Array.from(this.players.entries())));
-    await this.ctx.storage.put(this.STORAGE_KEYS.GAME_STATE, JSON.stringify(this.gameState));
+    await this.ctx.storage.put(
+      this.STORAGE_KEYS.PLAYERS,
+      JSON.stringify(Array.from(this.players.entries()))
+    );
+    await this.ctx.storage.put(
+      this.STORAGE_KEYS.GAME_STATE,
+      JSON.stringify(this.gameState)
+    );
+    await this.ctx.storage.put(
+      this.STORAGE_KEYS.CHAT_MESSAGES,
+      JSON.stringify(this.chatMessages)
+    );
 
     console.log("GameLobby state saved");
   }
@@ -113,20 +150,29 @@ export class GameLobby extends DurableObject {
   /**
    * Initialize a new lobby
    */
-  async initialize(hostId: string, hostName: string, invitationCode: string): Promise<void> {
-    
+  async initialize(
+    hostId: string,
+    hostName: string,
+    invitationCode: string
+  ): Promise<void> {
     const lobbyId = crypto.randomUUID();
 
     await this.ctx.storage.put({
-    [this.STORAGE_KEYS.LOBBY_ID]: lobbyId,
-    [this.STORAGE_KEYS.INVITATION_CODE]: invitationCode,
-    [this.STORAGE_KEYS.HOST_ID]: hostId,
-    })
-    
-    this.players.set(hostId, { id: hostId, name: hostName, connected: false, totalScore: 0 });
-    
+      [this.STORAGE_KEYS.LOBBY_ID]: lobbyId,
+      [this.STORAGE_KEYS.INVITATION_CODE]: invitationCode,
+      [this.STORAGE_KEYS.HOST_ID]: hostId
+    });
+
+    this.players.set(hostId, {
+      id: hostId,
+      name: hostName,
+      connected: false,
+      totalScore: 0
+    });
+    this.chatMessages = []; // Clear chat messages for new lobby
+
     await this.saveState();
-    
+
     console.log(`Lobby initialized with code: ${invitationCode}`);
   }
 
@@ -135,7 +181,7 @@ export class GameLobby extends DurableObject {
    */
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    
+
     // Handle WebSocket upgrade requests
     if (request.headers.get("Upgrade") === "websocket") {
       return this.handleWebSocketUpgrade(request);
@@ -146,16 +192,26 @@ export class GameLobby extends DurableObject {
 
     // POST /initialize - Set up a new lobby
     if (path === "/initialize" && request.method === "POST") {
-      const { hostId, hostName, invitationCode } = await request.json() as { hostId: string, hostName: string, invitationCode: string };
+      const { hostId, hostName, invitationCode } = (await request.json()) as {
+        hostId: string;
+        hostName: string;
+        invitationCode: string;
+      };
       await this.initialize(hostId, hostName, invitationCode);
       return Response.json({ success: true });
     }
 
     // POST /join - Add a player to the lobby
     if (path === "/join" && request.method === "POST") {
-      const { playerId, playerName } = await request.json() as { playerId: string, playerName: string };
+      const { playerId, playerName } = (await request.json()) as {
+        playerId: string;
+        playerName: string;
+      };
       await this.addPlayer(playerId, playerName);
-      return Response.json({ success: true, players: Array.from(this.players.values()) });
+      return Response.json({
+        success: true,
+        players: Array.from(this.players.values())
+      });
     }
 
     // POST /start - Start the game (host only)
@@ -166,7 +222,10 @@ export class GameLobby extends DurableObject {
 
     // POST /answer - Submit an answer
     if (path === "/answer" && request.method === "POST") {
-      const { playerId, answer } = await request.json() as { playerId: string, answer: string };
+      const { playerId, answer } = (await request.json()) as {
+        playerId: string;
+        answer: string;
+      };
       await this.handlePlayerAnswer(playerId, answer);
       return Response.json({ success: true });
     }
@@ -177,10 +236,10 @@ export class GameLobby extends DurableObject {
       if (!(await this.isInitialized())) {
         return Response.json({ error: "Lobby not found" }, { status: 404 });
       }
-      
+
       return Response.json({
         players: Array.from(this.players.values()),
-        gameState: this.gameState,
+        gameState: this.gameState
       });
     }
 
@@ -191,30 +250,35 @@ export class GameLobby extends DurableObject {
    * Handle WebSocket upgrade and connection
    */
   private async handleWebSocketUpgrade(request: Request): Promise<Response> {
-    
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-    
+
     // Extract playerId from URL query params
     const url = new URL(request.url);
     const playerId = url.searchParams.get("playerId");
-    
+
     if (!playerId) {
       return new Response("Missing playerId", { status: 400 });
     }
-    
+
     // Accept the WebSocket with the Hibernation API
     // Tag it with playerId so we can identify it later
     this.ctx.acceptWebSocket(server, [playerId]);
-    
+
     // Mark player as connected
     const player = this.players.get(playerId);
     if (player) {
       player.connected = true;
     }
     await this.saveState();
-    
-    this.broadcast({ type: 'player_connected', data: { playerId } });
+
+    // Send chat history to the newly connected player
+    this.sendToPlayer(playerId, {
+      type: "chat_history",
+      data: { messages: this.chatMessages }
+    });
+
+    this.broadcast({ type: "player_connected", data: { playerId } });
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -224,25 +288,33 @@ export class GameLobby extends DurableObject {
    */
   private async addPlayer(playerId: string, playerName: string): Promise<void> {
     // 1. Create Player object
-    const player: Player = {id: playerId, name: playerName, connected: false, totalScore: 0}
+    const player: Player = {
+      id: playerId,
+      name: playerName,
+      connected: false,
+      totalScore: 0
+    };
     // 2. Add to this.players Map
-    this.players.set(playerId, player)
+    this.players.set(playerId, player);
     // 3. Save state
     await this.saveState();
     // 4. Broadcast to all players that someone joined
-    this.broadcast({type: 'player_joined', data: {playerId, playerName}})
-    
+    this.broadcast({ type: "player_joined", data: { playerId, playerName } });
+
     console.log(`Player ${playerName} (${playerId}) joined`);
   }
 
   /**
    * WebSocket message handler - called when a player sends a message
    */
-  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
+  async webSocketMessage(
+    ws: WebSocket,
+    message: string | ArrayBuffer
+  ): Promise<void> {
     try {
       // Parse the message
       const data: WSMessage = JSON.parse(message as string);
-      
+
       // Get playerId from WebSocket tags
       const tags = this.ctx.getTags(ws);
       const playerId = tags[0];
@@ -256,15 +328,19 @@ export class GameLobby extends DurableObject {
 
       // Handle different message types
       switch (data.type) {
-        case 'answer':
+        case "answer":
           await this.handlePlayerAnswer(playerId, data.data.answer);
           break;
-        
-        case 'start':
+
+        case "start":
           // Only host can start (you can add this check)
           await this.startGame();
           break;
-        
+
+        case "chat":
+          await this.handleChatMessage(playerId, data.data.message);
+          break;
+
         default:
           console.log(`Unknown message type: ${data.type}`);
       }
@@ -276,7 +352,12 @@ export class GameLobby extends DurableObject {
   /**
    * WebSocket close handler - called when a player disconnects
    */
-  async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void> {
+  async webSocketClose(
+    ws: WebSocket,
+    code: number,
+    reason: string,
+    wasClean: boolean
+  ): Promise<void> {
     const tags = this.ctx.getTags(ws);
     const playerId = tags[0];
 
@@ -287,8 +368,8 @@ export class GameLobby extends DurableObject {
         player.connected = false;
       }
       await this.saveState();
-      this.broadcast({type: 'player_disconnected', data: {playerId}})
-      
+      this.broadcast({ type: "player_disconnected", data: { playerId } });
+
       console.log(`Player ${playerId} disconnected`);
     }
   }
@@ -304,31 +385,31 @@ export class GameLobby extends DurableObject {
    * Start the game
    */
   private async startGame(): Promise<void> {
-    if (this.gameState.status !== 'waiting') {
+    if (this.gameState.status !== "waiting") {
       console.log("Game already started");
       return;
     }
 
     // Change status to countdown
-    this.gameState.status = 'countdown';
-    
+    this.gameState.status = "countdown";
+
     // Broadcast countdown messages to ALL players
     for (let i = 3; i > 0; i--) {
       this.broadcast({
-        type: 'countdown', 
+        type: "countdown",
         data: { count: i, message: `🎮 Starting in ${i}...` }
       });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    
+
     this.broadcast({
-      type: 'countdown', 
+      type: "countdown",
       data: { count: 0, message: "Let's play! 🎯" }
     });
-    
+
     // Start the first round
     await this.startRound(1);
-    
+
     console.log("Game started");
   }
 
@@ -340,32 +421,36 @@ export class GameLobby extends DurableObject {
     const country = getRandomCountry();
     // 2. Create CurrentRound object
     this.gameState.currentRound = {
-      number: roundNumber, 
+      number: roundNumber,
       country: country,
       startTime: Date.now(),
-      answers: new Map(),
-    }
+      answers: new Map()
+    };
     // 3. Update gameState.status to 'playing'
-    this.gameState.status = 'playing';
+    this.gameState.status = "playing";
     // 4. Broadcast flag to all players
-    this.broadcast({type: 'flag', 
+    this.broadcast({
+      type: "flag",
       data: {
         flagEmoji: country.emoji,
-        roundNumber: roundNumber, 
+        roundNumber: roundNumber,
         totalRounds: this.gameState.totalRounds,
         startTime: this.gameState.currentRound.startTime
       }
-    })
+    });
     // 5. Set timeout to end round after 15 seconds - store ID so we can cancel it
     this.roundTimeoutId = setTimeout(() => this.endRound(), 15000);
-    
+
     console.log(`Starting round ${roundNumber}`);
   }
 
   /**
    * Handle a player's answer
    */
-  private async handlePlayerAnswer(playerId: string, answer: string): Promise<void> {
+  private async handlePlayerAnswer(
+    playerId: string,
+    answer: string
+  ): Promise<void> {
     if (!this.gameState.currentRound) {
       console.log("No active round");
       return;
@@ -375,22 +460,58 @@ export class GameLobby extends DurableObject {
     if (this.gameState.currentRound.answers.has(playerId)) {
       console.log(`Player ${playerId} already answered`);
       return;
-    } 
-    this.gameState.currentRound.answers.set(playerId, 
-      {
-        playerId: playerId, 
-        answer: answer,
-        timestamp: Date.now(),
-      })
+    }
+    this.gameState.currentRound.answers.set(playerId, {
+      playerId: playerId,
+      answer: answer,
+      timestamp: Date.now()
+    });
     await this.saveState();
-     
+
     // 2. Record answer with timestamp
     // 3. Check if all players have answered, if yes end the round immediately
     if (this.gameState.currentRound.answers.size === this.players.size) {
       await this.endRound();
     }
-    
+
     console.log(`Player ${playerId} answered: ${answer}`);
+  }
+
+  /**
+   * Handle a chat message from a player
+   */
+  private async handleChatMessage(
+    playerId: string,
+    message: string
+  ): Promise<void> {
+    const player = this.players.get(playerId);
+    if (!player) {
+      console.log(`Player ${playerId} not found`);
+      return;
+    }
+
+    // Create chat message object
+    const chatMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      playerId: playerId,
+      playerName: player.name,
+      message: message,
+      timestamp: Date.now()
+    };
+
+    // Add to chat messages array
+    this.chatMessages.push(chatMessage);
+
+    // Save state
+    await this.saveState();
+
+    // Broadcast to all players
+    this.broadcast({
+      type: "player_message",
+      data: chatMessage
+    });
+
+    console.log(`Chat message from ${player.name}: ${message}`);
   }
 
   /**
@@ -400,23 +521,26 @@ export class GameLobby extends DurableObject {
     if (!this.gameState.currentRound) return;
 
     // Guard: prevent multiple calls to endRound
-    if (this.gameState.status === "round_ended" || this.gameState.status === "finished") {
+    if (
+      this.gameState.status === "round_ended" ||
+      this.gameState.status === "finished"
+    ) {
       console.log("Round already ended or game finished");
       return;
     }
-    
+
     // Clear the round timeout to prevent it from firing again
     if (this.roundTimeoutId) {
       clearTimeout(this.roundTimeoutId);
       this.roundTimeoutId = null;
     }
-    
-    this.gameState.status = 'round_ended';
+
+    this.gameState.status = "round_ended";
     // 1. Collect all answers
     const answers = Array.from(this.gameState.currentRound.answers.values());
     // 2. Use evaluateRound() from game-logic.ts to score them
     const scores = evaluateRound(
-      answers, 
+      answers,
       this.gameState.currentRound.country,
       this.gameState.currentRound.startTime
     );
@@ -430,23 +554,24 @@ export class GameLobby extends DurableObject {
 
     await this.saveState();
     // 4. Broadcast results to all players
-    this.broadcast({type: 'round_result', 
+    this.broadcast({
+      type: "round_result",
       data: {
         correctAnswer: this.gameState.currentRound.country.name,
         correctFlag: this.gameState.currentRound.country.emoji,
         scores: scores,
         leaderboard: calculateLeaderboard(this.players)
       }
-    })
+    });
 
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     // 5. If more rounds, start next round
     if (this.gameState.currentRound.number < this.gameState.totalRounds) {
       await this.startRound(this.gameState.currentRound.number + 1);
     } else {
       await this.endGame();
     }
-    
+
     console.log("Round ended");
   }
 
@@ -455,23 +580,24 @@ export class GameLobby extends DurableObject {
    */
   private async endGame(): Promise<void> {
     // Guard: prevent multiple calls to endGame
-    if (this.gameState.status === 'finished') {
+    if (this.gameState.status === "finished") {
       console.log("Game already ended");
       return;
     }
-    
+
     // 1. Update status to 'finished'
-    this.gameState.status = 'finished'
+    this.gameState.status = "finished";
     // 2. Calculate final leaderboard
     const leaderboard = calculateLeaderboard(this.players);
     // 3. Broadcast winner and final standings
-    this.broadcast({type: 'game_ended', 
+    this.broadcast({
+      type: "game_ended",
       data: {
         winner: leaderboard[0],
         leaderboard: leaderboard
       }
-    })
-    
+    });
+
     console.log("Game ended");
   }
 
@@ -480,11 +606,13 @@ export class GameLobby extends DurableObject {
    */
   private broadcast(message: WSMessage): void {
     const payload = JSON.stringify(message);
-    
+
     // Use Hibernation API to get all connected WebSockets
     const sockets = this.ctx.getWebSockets();
-    console.log(`Broadcasting ${message.type} to ${sockets.length} connected sockets`);
-    
+    console.log(
+      `Broadcasting ${message.type} to ${sockets.length} connected sockets`
+    );
+
     for (const ws of sockets) {
       try {
         ws.send(payload);
@@ -509,4 +637,3 @@ export class GameLobby extends DurableObject {
     }
   }
 }
-

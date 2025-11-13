@@ -13,13 +13,13 @@ interface ToolResultWithContent {
 
 function renderGameToolResult(toolType: string, result: any) {
   switch (toolType) {
-    case 'tool-createGameLobby':
-    case 'tool-joinGameLobby':
+    case "tool-createGameLobby":
+    case "tool-joinGameLobby":
       if (result && result.success) {
         return <LobbyCard data={result} />;
       }
       return null;
-    case 'tool-startGame':
+    case "tool-startGame":
       return (
         <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded">
           ✓ Game started! Check the lobby above for the game screen.
@@ -128,12 +128,12 @@ export function ToolInvocationCard({
               {(() => {
                 const result = toolUIPart.output;
                 const gameUI = renderGameToolResult(toolUIPart.type, result);
-                
+
                 // If it's a game tool, render custom UI
                 if (gameUI) {
                   return gameUI;
                 }
-                
+
                 // Otherwise, render JSON result as before
                 return (
                   <>
@@ -149,10 +149,13 @@ export function ToolInvocationCard({
                                 item.type === "text" &&
                                 item.text.startsWith("\n~ Page URL:")
                               ) {
-                                const lines = item.text.split("\n").filter(Boolean);
+                                const lines = item.text
+                                  .split("\n")
+                                  .filter(Boolean);
                                 return lines
                                   .map(
-                                    (line: string) => `- ${line.replace("\n~ ", "")}`
+                                    (line: string) =>
+                                      `- ${line.replace("\n~ ", "")}`
                                   )
                                   .join("\n");
                               }

@@ -23,12 +23,12 @@ export function SystemMessage({ content, timestamp }: SystemMessageProps) {
             [SERVER]
           </span>
         </div>
-        
+
         {/* Message content */}
         <p className="text-sm text-gray-700 dark:text-gray-300 text-center whitespace-pre-wrap">
           {content}
         </p>
-        
+
         {/* Timestamp */}
         <div className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2">
           {formatTime(timestamp)}
@@ -37,5 +37,3 @@ export function SystemMessage({ content, timestamp }: SystemMessageProps) {
     </div>
   );
 }
-
-
