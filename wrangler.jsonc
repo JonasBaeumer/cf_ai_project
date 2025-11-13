@@ -31,6 +31,15 @@
     {
       "tag": "v2",
       "new_classes": ["GameLobby"]
+    },
+    {
+      "tag": "v3",
+      "renamed_classes": [
+        {
+          "from": "GameLobby",
+          "to": "GameLobby"
+        }
+      ]
     }
   ]
 }
