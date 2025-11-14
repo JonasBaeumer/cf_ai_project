@@ -35,6 +35,149 @@ This project is a **real-time multiplayer country guessing game** that combines 
 - **Hybrid UI Approach**: Combines agent chat interaction with real-time game event notifications in a dual-pane interface
 - **State Management**: Leverages Durable Objects' persistent storage and the WebSocket Hibernation API for efficient resource usage
 
+## 🚀 Getting Started
+
+Choose one of the following options to start playing:
+
+### Option 1: 🌐 Try the Live Demo (Quickest)
+
+Play the game immediately at:
+
+**🔗 [https://my-chat-agent.jbaeumer98.workers.dev](https://my-chat-agent.jbaeumer98.workers.dev)**
+
+> ⚠️ **Important Notice**: This demo runs on my personal OpenAI API key. If the service experiences high traffic or excessive API usage, I may temporarily take it offline to manage costs. For uninterrupted access, please use Option 2 or 3 below.
+
+**How to play:**
+1. Open the link in your browser
+2. Chat with the AI: "Create a game lobby"
+3. Share the invitation code with friends
+4. Start guessing flags! 🎯
+
+---
+
+### Option 2: 💻 Run Locally
+
+Run the game on your local machine with full control.
+
+**Prerequisites:**
+- Node.js (v18 or later)
+- npm (v9 or later)
+- An OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+
+**Setup Steps:**
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/JonasBaeumer/cf_ai_project.git
+   cd cf_ai_project
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+   
+   Create a `.dev.vars` file in the project root:
+   ```bash
+   cp .dev.vars.example .dev.vars
+   ```
+   
+   Edit `.dev.vars` and add your OpenAI API key:
+   ```env
+   OPENAI_API_KEY=sk-your-openai-api-key-here
+   API_BASE_URL=http://localhost:5173
+   ```
+
+4. **Start the development server**
+   ```bash
+   npm start
+   ```
+
+5. **Open your browser**
+   
+   Navigate to [http://localhost:5173](http://localhost:5173) and start playing!
+
+---
+
+### Option 3: ☁️ Deploy Your Own Instance on Cloudflare
+
+Deploy your own production-ready instance on Cloudflare Workers.
+
+**Prerequisites:**
+- Node.js (v18 or later)
+- npm (v9 or later)
+- A Cloudflare account ([Sign up for free](https://dash.cloudflare.com/sign-up))
+- An OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+
+**Deployment Steps:**
+
+1. **Clone and install** (if you haven't already)
+   ```bash
+   git clone https://github.com/JonasBaeumer/cf_ai_project.git
+   cd cf_ai_project
+   npm install
+   ```
+
+2. **Authenticate with Cloudflare**
+   ```bash
+   npx wrangler login
+   ```
+   This will open a browser window for authentication.
+
+3. **Set up your workers.dev subdomain**
+   
+   Visit the [Cloudflare Workers dashboard](https://dash.cloudflare.com/workers-and-pages) and create your `workers.dev` subdomain (one-time setup).
+
+4. **Update configuration**
+   
+   Edit `wrangler.jsonc` and update:
+   ```jsonc
+   {
+     "name": "your-game-name",  // Change this
+     "vars": {
+       "API_BASE_URL": "https://your-game-name.your-subdomain.workers.dev"
+     }
+   }
+   ```
+
+5. **Set production secrets**
+   ```bash
+   npx wrangler secret put OPENAI_API_KEY
+   ```
+   Paste your OpenAI API key when prompted.
+
+6. **Deploy to Cloudflare**
+   ```bash
+   npm run deploy
+   ```
+
+7. **Access your deployed game**
+   
+   Your game will be available at:
+   ```
+   https://your-game-name.your-subdomain.workers.dev
+   ```
+
+**Optional: Add a custom domain**
+
+Edit `wrangler.jsonc`:
+```jsonc
+{
+  "routes": [
+    {
+      "pattern": "yourdomain.com/*",
+      "custom_domain": true
+    }
+  ]
+}
+```
+
+Then redeploy with `npm run deploy`.
+
+---
+
 ## ✨ Key Features
 
 ### 🤖 AI Agent Integration
@@ -258,102 +401,7 @@ cf_ai_project/
 └── .dev.vars.example               # Environment variables template
 ```
 
-## 🚀 Setup Instructions
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Node.js** (v18 or later)
-- **npm** (v9 or later)
-- **A Cloudflare account** ([Sign up for free](https://dash.cloudflare.com/sign-up))
-- **An OpenAI API key** ([Get one here](https://platform.openai.com/api-keys))
-
-### Step 1: Clone the Repository
-
-```bash
-git clone https://github.com/JonasBaeumer/cf_ai_project.git
-cd cf_ai_project
-```
-
-### Step 2: Install Dependencies
-
-```bash
-npm install
-```
-
-This will install all required dependencies including:
-
-- Cloudflare Workers SDK
-- React and related libraries
-- AI SDK packages
-- Development tools
-
-### Step 3: Configure Environment Variables
-
-Create a `.dev.vars` file in the project root for local development:
-
-```bash
-cp .dev.vars.example .dev.vars
-```
-
-Edit `.dev.vars` and add your OpenAI API key:
-
-```env
-OPENAI_API_KEY=sk-your-openai-api-key-here
-API_BASE_URL=http://localhost:5173
-```
-
-**Note**: Never commit `.dev.vars` to version control. It's already in `.gitignore`.
-
-### Step 4: Configure Wrangler (Optional)
-
-If you want to deploy to Cloudflare, update `wrangler.jsonc`:
-
-```jsonc
-{
-  "name": "your-worker-name", // Change this to your desired worker name
-  "main": "src/server.ts",
-  "compatibility_date": "2025-08-03",
-  "compatibility_flags": ["nodejs_compat"]
-  // ... rest of the config
-}
-```
-
-### Step 5: Authenticate with Cloudflare (For Deployment)
-
-```bash
-npx wrangler login
-```
-
-This will open a browser window to authenticate your Wrangler CLI with your Cloudflare account.
-
-## 💻 Development
-
-### Running Locally
-
-Start the development server with:
-
-```bash
-npm start
-```
-
-This will:
-
-1. Start Vite dev server on `http://localhost:5173`
-2. Start the Cloudflare Workers local environment
-3. Initialize Durable Objects locally
-4. Enable hot module replacement for instant updates
-
-**Access the application**: Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### Development Workflow
-
-1. **Chat with the AI Agent**: Start a conversation in the chat interface
-2. **Create a Game**: Say something like "Create a new game lobby for me"
-3. **Join the Game**: The AI will provide an invitation code
-4. **Start Playing**: The agent will guide you through starting and playing the game
-5. **Real-Time Updates**: Watch the game events sidebar for live updates
+## 🧪 Development & Testing
 
 ### Running Tests
 
@@ -376,78 +424,34 @@ npm run format
 ### Debugging Tips
 
 1. **Check Browser Console**: Game events and WebSocket messages are logged
-2. **Wrangler Logs**: Terminal shows Durable Object logs
+2. **Wrangler Logs**: Terminal shows Durable Object logs (use `npx wrangler tail` for production)
 3. **Network Tab**: Inspect WebSocket connections and HTTP requests
 4. **React DevTools**: Install for component inspection
 
-## 🚢 Deployment
+## 📊 Production Monitoring
 
-### Deploy to Cloudflare Workers
+If you've deployed your own instance (Option 3), you can monitor it using:
 
-1. **Set Production Secrets**:
+### Logs
+```bash
+npx wrangler tail
+```
+Stream real-time logs from your production worker.
+
+### Analytics
+View metrics in the [Cloudflare Dashboard](https://dash.cloudflare.com):
+- **Workers → Analytics**: Request count, errors, CPU time
+- **Durable Objects**: Active objects, storage usage
+
+### Optional: AI Gateway
+
+For request caching and logging, configure [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/):
 
 ```bash
-# Add your OpenAI API key as a secret
-npx wrangler secret put OPENAI_API_KEY
-# Paste your key when prompted
-```
-
-2. **Deploy**:
-
-```bash
-npm run deploy
-```
-
-This will:
-
-- Build the React frontend with Vite
-- Bundle the Worker code
-- Upload to Cloudflare's global network
-- Create/update Durable Object namespaces
-- Apply any migrations
-
-3. **Access Your Deployed App**:
-
-After deployment, Wrangler will output your worker URL:
-
-```
-https://your-worker-name.your-subdomain.workers.dev
-```
-
-### Production Considerations
-
-#### Environment Variables
-
-Set these in your Cloudflare Workers dashboard or via Wrangler:
-
-```bash
-# OpenAI API Key (required)
-npx wrangler secret put OPENAI_API_KEY
-
-# Optional: Cloudflare AI Gateway (for caching and logging)
 npx wrangler secret put GATEWAY_BASE_URL
 ```
 
-#### Custom Domain (Optional)
-
-Add a custom domain in `wrangler.jsonc`:
-
-```jsonc
-{
-  "routes": [
-    {
-      "pattern": "yourdomain.com/*",
-      "custom_domain": true
-    }
-  ]
-}
-```
-
-#### Monitoring
-
-- **Logs**: `npx wrangler tail` to stream production logs
-- **Analytics**: View in Cloudflare Dashboard under Workers → Analytics
-- **Durable Objects**: Monitor usage in Dashboard → Durable Objects
+Then update your code to use the gateway URL as the OpenAI base URL.
 
 ## 🎮 How It Works
 
