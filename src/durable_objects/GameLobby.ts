@@ -444,6 +444,7 @@ export class GameLobby extends DurableObject {
       type: "flag",
       data: {
         flagEmoji: country.emoji,
+        countryCode: country.code,
         roundNumber: roundNumber,
         totalRounds: this.gameState.totalRounds,
         startTime: this.gameState.currentRound.startTime

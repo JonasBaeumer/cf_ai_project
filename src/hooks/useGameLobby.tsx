@@ -282,10 +282,9 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: null
               }));
 
+              // Use special format: FLAG_CODE|countryCode to tell sidebar to render with image
               addSystemMessage(
-                `🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\n` +
-                  `${message.data.flagEmoji}\n\n` +
-                  `Which country is this? You have 15 seconds! ⏱️`
+                `FLAG_CODE|${message.data.countryCode}|🚩 **Round ${message.data.roundNumber}/${message.data.totalRounds}**\n\nWhich country is this? You have 15 seconds! ⏱️`
               );
               break;
 

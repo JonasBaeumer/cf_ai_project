@@ -1,0 +1,214 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+\usepackage[margin=1.4cm]{geometry}
+
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.15in}
+ \addtolength{\textwidth}{0.3in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generate pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-1pt}}
+  }
+}
+
+\newcommand{\classesList}[4]{
+    \item\small{
+        {#1 #2 #3 #4 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}\vspace{0pt}
+\newcommand{\resumeItemListStart}{\begin{itemize}[itemsep=-2pt, parsep=0pt, topsep=0pt]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+
+
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\LARGE\scshape Jonas Bäumer} \\[1mm]
+    \footnotesize
+    \faPhone~\href{tel:+491706255818}{+49 170 625 5818} \quad
+    \faEnvelope~\href{mailto:jbaeumer98@yahoo.de}{jbaeumer98@yahoo.de} \quad
+    \faLinkedin~\href{https://www.linkedin.com/in/jonasbaeumer/}{linkedin.com/in/jonas-bäumer} \quad
+    \faGithub~\href{https://github.com/JonasBaeumer}{github.com/JonasBaeumer}
+    \vspace{-8pt}
+\end{center}
+
+%-----------EDUCATION-----------
+\section{Education}\vspace{1mm}
+\resumeSubHeadingListStart
+
+  \resumeSubheading
+    {University of California, Berkeley}{Aug 2024 -- May 2025}
+    {Visiting Graduate Student, Computer Science \textbar\ GPA: 3.96/4.0}{Berkeley, CA}
+
+  \resumeSubheading
+    {Technical University of Munich (TUM)}{Oct 2019 -- Present}
+    {M.Sc. Information Systems \textbar\ GPA: 1.4 (DE)}{Munich, DE}
+    \resumeSubSubheading
+      {B.Sc. Information Systems; Visiting Undergraduate Student at Umeå University (Computer Science)}{}
+    \resumeSubSubheading
+      {Relevant coursework: Algorithms, Distributed Systems, Machine Learning, Databases, Computer Networks, Graph Theory}{}
+    
+\resumeSubHeadingListEnd
+\vspace{-7pt}
+
+%-----------EXPERIENCE-----------
+\section{Work Experience}\vspace{1mm}
+\resumeSubHeadingListStart
+    \resumeSubheading{Stanford University}{Jan 2026 -- May 2026}
+      {Incoming Machine Learning Researcher Intern}{Stanford, CA}
+      \resumeItemListStart
+        \resumeItem{Research at the Technology transition for Defense Lab, focusing on \textbf{multi-agent} platforms and \textbf{LLM reasoning}.}
+      \resumeItemListEnd
+
+  \resumeSubheading{Enpal B.V.}{Jun 2025 -- Oct 2025}
+  {Data Science/Software Engineering Intern}{Munich/Berlin, DE}
+  \resumeItemListStart
+    \resumeItem{Designed and engineered a nationwide scheduling optimizer using simulated annealing \textbf{(Python/Cython)}, improving routing efficiency and reducing operational costs by \textbf{\$500k/year}.}
+    \resumeItem{Productionized the service end-to-end \textbf{(Docker, Azure)}, integrating into distributed internal systems and reducing computation time by \textbf{40\%}.}
+
+  \resumeItemListEnd
+
+  \resumeSubheading{AISBACH Data Solutions}{Jan 2024 -- Aug 2024}
+  {Machine Learning Engineer Intern}{Munich, DE}
+  \resumeItemListStart
+    \resumeItem{Built a production ML pipeline for vehicle-delivery ETA predictions, improving accuracy by \textbf{35\%} and supporting \textbf{10k+} real-time predictions/day.}
+    \resumeItem{Engineered feature stores and automated retraining workflows \textbf{(Python, pandas, scikit-learn)} integrated into microservices and REST APIs.}
+  \resumeItemListEnd
+
+  \resumeSubheading{TUM \& ZEISS Group (iPraktikum)}{Apr 2022 -- Aug 2022}
+  {Software Engineer Intern}{Munich, DE}
+  \resumeItemListStart
+        \resumeItem{Developed and shipped an iOS app using LiDAR for visual-impairment prediction; contributed full-stack features \textbf{(Swift/SwiftUI, Python)} and CI tooling used by \textbf{50+} testers.}
+  \resumeItemListEnd
+
+\resumeSubHeadingListEnd\vspace{-12pt}
+
+%-----------PROJECTS-----------
+\section{Selected Projects}
+\vspace{-5pt}
+\resumeSubHeadingListStart
+
+  \resumeProjectHeading
+  {\textbf{Staging AI} \ \normalsize\href{https://github.com/JonasBaeumer/SEBA}{\faGithub~}  \href{https://www.staging-ai.com/}{\faGlobe~}}{Node.js \textbar\ React \textbar\ AWS S3 \textbar\ Stripe \textbar\ Clerk \textbar\ Stable Diffusion}
+  \resumeItemListStart
+    \resumeItem{Built and deployed a full-stack platform for AI-based real-estate staging, serving \textbf{150+} monthly users and \textbf{500+} signups.}
+    \resumeItem{Designed multi-tenant backend architecture with secure auth, payments, and scalable image-processing pipelines.}
+  \resumeItemListEnd
+  \vspace{-15pt}
+
+  \resumeProjectHeading
+  {\textbf{Peer-Review Generator: LLM vs. RAG} \ \href{https://github.com/JonasBaeumer/VanillaLLMvsRAG}{\faGithub~} }{Python \textbar\ ChromaDB \textbar\ Pandas}
+  \resumeItemListStart
+    \resumeItem{Engineered a modular benchmarking pipeline comparing LLM and RAG-assisted review generation across \textbf{200+} papers.}
+    \resumeItem{ Implemented ingestion, embedding, retrieval, and evaluation workflows improving experiment throughput 4×.}
+  \resumeItemListEnd
+  \vspace{-15pt}
+
+  \resumeProjectHeading
+  {\textbf{Jarvis (AI Butler)} \ \href{https://github.com/kesavaprasadarul/anthropic-hackathon}{\faGithub~}}{React \textbar\ FastAPI \textbar\ Firebase \textbar\ Twilio \textbar\ ElevenLabs}
+  \resumeItemListStart
+    \resumeItem{Built an event-driven agent system automating \textbf{300+} tasks/month across \textbf{10+} integrations.}
+    \resumeItem{Designed reliable multi-step conversational and voice pipelines, improving task completion time by \textbf{60\%}.}
+  \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+\vspace{-15pt}
+
+%-----------SKILLS-----------
+\section{Technical Skills}\vspace{1mm}
+\begin{itemize}[leftmargin=0.15in, label={}]
+  \small \item{
+    \textbf{Languages:} Python, Java, C++, TypeScript/JavaScript, SQL, Swift, HTML/CSS \\
+    \textbf{Libraries/Frameworks:} FastAPI, Node.js/Express, Spring Boot, REST, Next.js, React,  TailwindCSS,  pandas, scikit-learn, numpy,  Elevenlabs, Langchain/Langgraph \\
+    \textbf{Developer Tools:} Azure, AWS (S3), Docker, GitHub Actions, ChromaDB, PostgreSQL, MongoDB
+  }
+\end{itemize}
+\vspace{-15pt}
+
+%-----------AWARDS-----------
+\section{Awards \& Activities}\vspace{1mm}
+\begin{itemize}[leftmargin=0.15in, label={}]
+  \small \item{
+    \textbf{2x Hackathon Winner:} MBZUAI K2 Think Hackathon (900+ teams, Abu Dhabi), AWS×Lovable×CDTM  \\
+    \textbf{Deutschlandstipendium (TUM):} Merit-based national scholarship recognizing academic excellence. \\
+    \textbf{TUM.ai — Head of Industry:} Managed a \textbf{10-member} team and \textbf{15+} corporate partnerships, growing revenue by \textbf{90\%}.
+  }
+\end{itemize}
+
+\vspace{-6pt}
+
+
+
+\end{document}

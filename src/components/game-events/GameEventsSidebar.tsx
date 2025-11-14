@@ -115,22 +115,68 @@ export function GameEventsSidebar({
           </div>
         ) : (
           <>
-            {events.map((event) => (
-              <Card
-                key={event.id}
-                className="p-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm"
-              >
-                {/* Event content - render as markdown */}
-                <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-                  <MemoizedMarkdown id={event.id} content={event.content} />
-                </div>
+            {events.map((event) => {
+              // Check if this is a flag message
+              const isFlagMessage = event.content.startsWith("FLAG_CODE|");
+              let countryCode = "";
+              let displayContent = event.content;
+              
+              if (isFlagMessage) {
+                // Extract country code and actual content
+                const parts = event.content.split("|");
+                countryCode = parts[1];
+                displayContent = parts.slice(2).join("|");
+              }
 
-                {/* Timestamp */}
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-right">
-                  {formatTime(event.timestamp)}
-                </div>
-              </Card>
-            ))}
+              return (
+                <Card
+                  key={event.id}
+                  className="p-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+                >
+                  {isFlagMessage ? (
+                    // Special layout for flag messages: text on left, flag image on right
+                    <div className="flex gap-3 items-start">
+                      <div className="flex-1">
+                        {/* Event content - render as markdown */}
+                        <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                          <MemoizedMarkdown id={event.id} content={displayContent} />
+                        </div>
+                        {/* Timestamp */}
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                          {formatTime(event.timestamp)}
+                        </div>
+                      </div>
+                      {/* Flag image */}
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={`https://flagcdn.com/h120/${countryCode}.png`}
+                          alt="Country flag"
+                          className="w-24 h-16 object-cover rounded border-2 border-gray-300 dark:border-gray-600 shadow-md"
+                          loading="lazy"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Normal message layout
+                    <>
+                      {/* Event content - render as markdown */}
+                      <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+                        <MemoizedMarkdown id={event.id} content={displayContent} />
+                      </div>
+
+                      {/* Timestamp */}
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-right">
+                        {formatTime(event.timestamp)}
+                      </div>
+                    </>
+                  )}
+                </Card>
+              );
+            })}
             {/* Extra padding at bottom to prevent cutoff */}
             <div className="h-4" />
             <div ref={eventsEndRef} />
