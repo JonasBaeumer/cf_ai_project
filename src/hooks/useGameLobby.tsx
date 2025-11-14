@@ -134,6 +134,40 @@ export function useGameLobby(invitationCode: string, playerId: string) {
   }, []);
 
   /**
+   * Leave the lobby and disconnect
+   */
+  const leaveLobby = useCallback(() => {
+    console.log(`[useGameLobby ${invitationCode.slice(-4)}] Leaving lobby`);
+    
+    // Clear reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    // Close WebSocket connection
+    if (wsRef.current) {
+      wsRef.current.close(1000, "User left lobby");
+      wsRef.current = null;
+    }
+    
+    // Reset connection flag so it won't try to reconnect
+    hasConnectedRef.current = false;
+    
+    // Update state
+    setConnected(false);
+    setPlayers([]);
+    setGameState({
+      status: "waiting",
+      currentRound: null,
+      roundResult: null,
+      finalLeaderboard: null
+    });
+    
+    addSystemMessage("👋 You left the lobby.");
+  }, [invitationCode, addSystemMessage]);
+
+  /**
    * Fetch current player list from API
    */
   const fetchPlayers = useCallback(async () => {
@@ -262,6 +296,24 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                 roundResult: message.data
               }));
 
+              // Update player scores from the leaderboard
+              if (message.data.leaderboard) {
+                setPlayers((currentPlayers) =>
+                  currentPlayers.map((player) => {
+                    const leaderboardEntry = message.data.leaderboard.find(
+                      (p: any) => p.playerId === player.id
+                    );
+                    if (leaderboardEntry) {
+                      return {
+                        ...player,
+                        totalScore: leaderboardEntry.totalScore
+                      };
+                    }
+                    return player;
+                  })
+                );
+              }
+
               const leaderboard = message.data.leaderboard
                 .map(
                   (p: any, i: number) =>
@@ -297,6 +349,11 @@ export function useGameLobby(invitationCode: string, playerId: string) {
                   `**Final Standings:**\n${finalBoard}`,
                 { showInChat: true } // Show game results in main chat too!
               );
+              break;
+
+            case "game_event":
+              // Display game event message in the sidebar
+              addSystemMessage(message.data.message);
               break;
 
             case "player_message":
@@ -397,6 +454,7 @@ export function useGameLobby(invitationCode: string, playerId: string) {
     error,
     sendAnswer,
     startGame,
-    sendChatMessage
+    sendChatMessage,
+    leaveLobby
   };
 }

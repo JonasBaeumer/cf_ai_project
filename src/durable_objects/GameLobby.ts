@@ -278,6 +278,17 @@ export class GameLobby extends DurableObject {
       data: { messages: this.chatMessages }
     });
 
+    // Send welcome message to the player
+    const playerName = player?.name || "Player";
+    this.sendToPlayer(playerId, {
+      type: "game_event",
+      data: {
+        message: `👋 **Welcome ${playerName}!**\n\n` +
+          `You've joined the lobby. Check the rules panel above!\n\n` +
+          `⏳ Waiting for the host to start the game...`
+      }
+    });
+
     this.broadcast({ type: "player_connected", data: { playerId } });
 
     return new Response(null, { status: 101, webSocket: client });

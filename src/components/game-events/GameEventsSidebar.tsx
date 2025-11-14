@@ -6,6 +6,7 @@
 import { useEffect, useRef } from "react";
 import { Card } from "@/components/card/Card";
 import { MemoizedMarkdown } from "@/components/memoized-markdown";
+import { LobbyCard } from "@/components/game/LobbyCard";
 
 interface GameEvent {
   id: string;
@@ -13,14 +14,22 @@ interface GameEvent {
   timestamp: number;
 }
 
+interface LobbyData {
+  invitationCode: string;
+  playerId: string;
+  playerName: string;
+}
+
 interface GameEventsSidebarProps {
   events: GameEvent[];
   isVisible: boolean;
+  lobbyData: LobbyData | null;
 }
 
 export function GameEventsSidebar({
   events,
-  isVisible
+  isVisible,
+  lobbyData
 }: GameEventsSidebarProps) {
   const eventsEndRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +48,7 @@ export function GameEventsSidebar({
   };
 
   return (
-    <div className="h-full flex flex-col border-l border-neutral-300 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
+    <div className="h-full w-full flex flex-col border-l border-neutral-300 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
       {/* Header */}
       <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 bg-white dark:bg-neutral-900">
         <div className="flex items-center gap-2">
@@ -50,9 +59,55 @@ export function GameEventsSidebar({
         </div>
       </div>
 
+      {/* Lobby Card & Rules - Sticky at top when active */}
+      {lobbyData && (
+        <div className="sticky top-0 z-10 bg-neutral-50 dark:bg-neutral-900 p-3 border-b border-neutral-300 dark:border-neutral-700 shadow-sm">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Lobby Card - Compact */}
+            <div>
+              <LobbyCard 
+                data={{
+                  success: true,
+                  invitationCode: lobbyData.invitationCode,
+                  playerId: lobbyData.playerId,
+                  playerName: lobbyData.playerName
+                }}
+              />
+            </div>
+
+            {/* Game Rules - Always visible */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
+                  RULES
+                </span>
+              </div>
+              <div className="text-xs space-y-2 text-gray-700 dark:text-gray-300">
+                <div>
+                  <p className="font-semibold text-[#F48120] mb-1">How to Play:</p>
+                  <ul className="space-y-0.5 list-disc list-inside">
+                    <li>See flag emoji each round</li>
+                    <li>Type country name</li>
+                    <li>15 seconds per round</li>
+                    <li>Faster = more points!</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#F48120] mb-1">Scoring:</p>
+                  <ul className="space-y-0.5 list-disc list-inside">
+                    <li>Correct: 100 pts</li>
+                    <li>Speed bonus: +50 pts</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Events List */}
       <div className="flex-1 overflow-y-auto p-4 pb-22 space-y-3">
-        {events.length === 0 ? (
+        {events.length === 0 && !lobbyData ? (
           <div className="text-center py-8 text-sm text-muted-foreground">
             <p className="mb-2">🎮</p>
             <p>Game events will appear here</p>

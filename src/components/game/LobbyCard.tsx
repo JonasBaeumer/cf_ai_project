@@ -16,9 +16,9 @@ interface LobbyCardProps {
 
 function LobbyCardComponent({ data }: LobbyCardProps) {
   const [copied, setCopied] = useState(false);
-  const { players, gameState, connected, startGame, sendChatMessage } =
+  const { players, gameState, connected, startGame, sendChatMessage, leaveLobby } =
     useGameLobby(data.invitationCode, data.playerId);
-  const { registerPlayerChat, unregisterPlayerChat } = useAgentContext();
+  const { registerPlayerChat, unregisterPlayerChat, clearActiveLobby } = useAgentContext();
 
   // Register player chat function with the main app context
   useEffect(() => {
@@ -39,81 +39,90 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
     }
   };
 
+  const handleLeave = () => {
+    // Unregister player chat first
+    unregisterPlayerChat();
+    // Clear the lobby from app state (removes lobby card from sidebar)
+    clearActiveLobby();
+    // Then leave the lobby (closes WebSocket, clears state)
+    leaveLobby();
+  };
+
   // Keep showing lobby card - don't switch to GameCard
   // The agent will display flags and handle answers in chat
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Users size={20} className="text-[#F48120]" />
-        <h3 className="font-semibold text-lg">Game Lobby</h3>
+      <div className="flex items-center gap-1.5">
+        <Users size={16} className="text-[#F48120]" />
+        <h3 className="font-semibold text-sm">Lobby</h3>
         {connected && (
-          <span className="text-xs text-green-500">● Connected</span>
+          <span className="text-xs text-green-500">●</span>
         )}
         {!connected && (
-          <span className="text-xs text-gray-400">○ Connecting...</span>
+          <span className="text-xs text-gray-400">○</span>
         )}
       </div>
 
       {/* Invitation Code */}
-      <div className="bg-background/80 p-3 rounded-md">
-        <p className="text-xs text-muted-foreground mb-1">Invitation Code:</p>
-        <div className="flex items-center gap-2">
-          <code className="text-lg font-mono font-bold text-[#F48120]">
+      <div className="bg-background/80 p-2 rounded-md">
+        <p className="text-xs text-muted-foreground mb-0.5">Code:</p>
+        <div className="flex items-center gap-1.5">
+          <code className="text-sm font-mono font-bold text-[#F48120]">
             {data.invitationCode}
           </code>
-          <Button size="sm" variant="secondary" onClick={handleCopyCode}>
-            <Copy size={14} />
-            {copied ? "Copied!" : "Copy"}
+          <Button size="sm" variant="secondary" onClick={handleCopyCode} className="h-6 px-2 text-xs">
+            <Copy size={12} />
+            {copied ? "✓" : ""}
           </Button>
         </div>
       </div>
 
       {/* Players List */}
       <div>
-        <p className="text-sm font-medium mb-2">
+        <p className="text-xs font-medium mb-1">
           Players ({players?.length || 0}):
         </p>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {players && players.length > 0 ? (
             players.map((player, index) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between gap-2"
+                className="flex items-center justify-between gap-1"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {/* Connection status dot */}
                   <div
-                    className={`w-2 h-2 rounded-full ${player.connected ? "bg-green-500" : "bg-gray-400"}`}
+                    className={`w-1.5 h-1.5 rounded-full ${player.connected ? "bg-green-500" : "bg-gray-400"}`}
                   />
 
                   {/* Player name */}
-                  <span className="text-sm">
+                  <span className="text-xs truncate">
                     {player.name}
                     {player.id === data.playerId && (
-                      <span className="text-[#F48120] ml-1">(You)</span>
+                      <span className="text-[#F48120] ml-0.5">(You)</span>
                     )}
                     {index === 0 && (
-                      <span className="text-muted-foreground ml-1">(Host)</span>
+                      <span className="text-muted-foreground ml-0.5">(Host)</span>
                     )}
                   </span>
                 </div>
 
                 {/* Score - show if game is in progress */}
                 {gameState.status !== "waiting" && (
-                  <span className="text-sm font-semibold text-[#F48120]">
+                  <span className="text-xs font-semibold text-[#F48120] whitespace-nowrap">
                     {player.totalScore || 0} pts
                   </span>
                 )}
               </div>
             ))
           ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-sm">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-xs">
                 {data.playerName}
-                <span className="text-[#F48120] ml-1">(You)</span>
-                <span className="text-muted-foreground ml-1">(Host)</span>
+                <span className="text-[#F48120] ml-0.5">(You)</span>
+                <span className="text-muted-foreground ml-0.5">(Host)</span>
               </span>
             </div>
           )}
@@ -121,26 +130,20 @@ function LobbyCardComponent({ data }: LobbyCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         {/* Info message for host */}
-        {players && players.length > 0 && players[0].id === data.playerId && (
-          <div className="text-sm text-muted-foreground text-center py-2 px-3 bg-[#F48120]/5 rounded">
-            Ready to play? Tell me "Start the game" to begin! 🎮
-          </div>
-        )}
-
-        {/* If no players array yet, show for the creator */}
-        {(!players || players.length === 0) && (
-          <div className="text-sm text-muted-foreground text-center py-2 px-3 bg-[#F48120]/5 rounded">
-            Ready to play? Tell me "Start the game" to begin! 🎮
+        {((players && players.length > 0 && players[0].id === data.playerId) || 
+          (!players || players.length === 0)) && (
+          <div className="text-xs text-muted-foreground text-center py-1.5 px-2 bg-[#F48120]/5 rounded">
+            Say "Start the game" to begin! 🎮
           </div>
         )}
 
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => console.log("Leave lobby")}
-          className="w-full"
+          onClick={handleLeave}
+          className="w-full h-7 text-xs"
         >
           Leave
         </Button>

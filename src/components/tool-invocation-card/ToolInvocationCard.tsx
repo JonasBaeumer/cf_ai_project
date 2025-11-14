@@ -4,8 +4,6 @@ import { Robot, CaretDown } from "@phosphor-icons/react";
 import { Button } from "@/components/button/Button";
 import { Card } from "@/components/card/Card";
 import { APPROVAL } from "@/shared";
-import { LobbyCard } from "@/components/game/LobbyCard";
-import { GameCard } from "@/components/game/GameCard";
 
 interface ToolResultWithContent {
   content: Array<{ type: string; text: string }>;
@@ -14,15 +12,27 @@ interface ToolResultWithContent {
 function renderGameToolResult(toolType: string, result: any) {
   switch (toolType) {
     case "tool-createGameLobby":
+      if (result && result.success) {
+        return (
+          <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded">
+            ✓ Game lobby created! Check the right sidebar for lobby details.
+          </div>
+        );
+      }
+      return null;
     case "tool-joinGameLobby":
       if (result && result.success) {
-        return <LobbyCard data={result} />;
+        return (
+          <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded">
+            ✓ Joined the lobby! Check the right sidebar for lobby details.
+          </div>
+        );
       }
       return null;
     case "tool-startGame":
       return (
         <div className="text-sm text-green-600 dark:text-green-400 p-3 bg-green-50 dark:bg-green-900/20 rounded">
-          ✓ Game started! Check the lobby above for the game screen.
+          ✓ Game started! Watch the right sidebar for game updates.
         </div>
       );
     default:

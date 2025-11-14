@@ -13,6 +13,7 @@ interface AgentContextType {
   registerPlayerChat: (sendFn: (message: string) => void) => void;
   unregisterPlayerChat: () => void;
   hasActiveLobby: boolean;
+  clearActiveLobby: () => void;
 }
 
 export const AgentContext = createContext<AgentContextType | null>(null);

@@ -47,6 +47,11 @@ export default function Chat() {
   const [playerChatSendFn, setPlayerChatSendFn] = useState<
     ((message: string) => void) | null
   >(null);
+  const [activeLobbyData, setActiveLobbyData] = useState<{
+    invitationCode: string;
+    playerId: string;
+    playerName: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -154,6 +159,35 @@ export default function Chat() {
     agentMessages.length > 0 && scrollToBottom();
   }, [agentMessages, scrollToBottom]);
 
+  // Extract lobby data from tool results
+  useEffect(() => {
+    // Find the most recent createGameLobby or joinGameLobby tool result
+    for (let i = agentMessages.length - 1; i >= 0; i--) {
+      const message = agentMessages[i];
+      if (message.role === "assistant" && message.parts) {
+        for (const part of message.parts) {
+          if (
+            isToolUIPart(part) &&
+            (part.type === "tool-createGameLobby" ||
+              part.type === "tool-joinGameLobby") &&
+            part.state === "output-available" &&
+            part.output
+          ) {
+            const output = part.output as any;
+            if (output.success && output.invitationCode) {
+              setActiveLobbyData({
+                invitationCode: output.invitationCode,
+                playerId: output.playerId,
+                playerName: output.playerName
+              });
+              return; // Found the most recent lobby
+            }
+          }
+        }
+      }
+    }
+  }, [agentMessages]);
+
   const pendingToolCallConfirmation = agentMessages.some((m: UIMessage) =>
     m.parts?.some(
       (part) =>
@@ -219,7 +253,11 @@ export default function Chat() {
       setChatMode("ai"); // Reset to AI mode when lobby closes
       console.log("[app.tsx] Player chat unregistered");
     },
-    hasActiveLobby: playerChatSendFn !== null
+    hasActiveLobby: playerChatSendFn !== null,
+    clearActiveLobby: () => {
+      setActiveLobbyData(null);
+      console.log("[app.tsx] Active lobby cleared");
+    }
   };
 
   return (
@@ -228,7 +266,7 @@ export default function Chat() {
         <HasOpenAIKey />
         <div className="h-[calc(100vh-2rem)] w-full mx-auto max-w-7xl flex shadow-xl rounded-md overflow-hidden relative border border-neutral-300 dark:border-neutral-800">
           {/* Main Chat Column */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 md:w-1/2">
             <div className="px-4 py-3 border-b border-neutral-300 dark:border-neutral-800 flex items-center gap-3 sticky top-0 z-10">
               <div className="flex items-center justify-center h-8 w-8">
                 <svg
@@ -295,22 +333,32 @@ export default function Chat() {
                         <Robot size={24} />
                       </div>
                       <h3 className="font-semibold text-lg">
-                        Welcome to AI Chat
+                        Welcome to Guess the Country! 🌍
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        Start a conversation with your AI assistant. Try asking
-                        about:
+                        I'm your AI game assistant! I can help you:
                       </p>
                       <ul className="text-sm text-left space-y-2">
                         <li className="flex items-center gap-2">
-                          <span className="text-[#F48120]">•</span>
-                          <span>Weather information for any city</span>
+                          <span className="text-[#F48120]">🎮</span>
+                          <span>Create a new game lobby</span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <span className="text-[#F48120]">•</span>
-                          <span>Local time in different locations</span>
+                          <span className="text-[#F48120]">👥</span>
+                          <span>Join an existing game with a code</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-[#F48120]">🚀</span>
+                          <span>Start the game and compete with friends</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="text-[#F48120]">🏆</span>
+                          <span>Check scores and leaderboards</span>
                         </li>
                       </ul>
+                      <p className="text-muted-foreground text-xs pt-2">
+                        Try saying: "Create a game lobby" or "Join game GAME-ABC123"
+                      </p>
                     </div>
                   </Card>
                 </div>
@@ -548,8 +596,12 @@ export default function Chat() {
           {/* End Main Chat Column */}
 
           {/* Game Events Sidebar */}
-          <div className="w-80 hidden md:block">
-            <GameEventsSidebar events={systemMessages} isVisible={true} />
+          <div className="flex-1 hidden md:flex md:w-1/2">
+            <GameEventsSidebar 
+              events={systemMessages} 
+              isVisible={true}
+              lobbyData={activeLobbyData}
+            />
           </div>
         </div>
       </div>
